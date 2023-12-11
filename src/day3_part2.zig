@@ -1,20 +1,55 @@
 const std = @import("std");
 
-const data = @embedFile("./data/day3-test.txt");
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
 
-fn checkLeft() void {
+const data = @embedFile("./data/day3.txt");
+var clean_data: []u8 = undefined;
 
+fn listToNumber(list: std.ArrayList(u8)) u32 {
+    var number: u32 = 0;
+    for(0..list.items.len) |i| {
+        const exp = std.math.pow(u32, 10, @intCast(i));
+        number += list.items[list.items.len - 1 - i] * exp;
+    }
+    return number;
 }
 
-fn checkRight() void {
+fn expand(x: i16, y: i16, x_off: i16, y_off: i16, column_count: i16) !u32 {
+    var left_numbers = std.ArrayList(u8).init(allocator);
+    var right_numbers = std.ArrayList(u8).init(allocator);
+    defer right_numbers.deinit();
+    defer left_numbers.deinit();
 
+    for(1..3) |o| {
+        const idx_off_l = indexWithOffset(x, y, column_count, x_off - @as(i16, @intCast(o)), y_off);
+        const char = clean_data[@intCast(idx_off_l)];
+        const found_digit = std.fmt.charToDigit(char, 10) catch {
+            break;
+        };
+        try left_numbers.append(found_digit);
+    }
+    for(0..3) |o| {
+        const idx_off_r = indexWithOffset(x, y, column_count, x_off + @as(i16, @intCast(o)), y_off);
+        const char = clean_data[@intCast(idx_off_r)];
+        const found_digit = std.fmt.charToDigit(char, 10) catch {
+            break;
+        };
+        try right_numbers.append(found_digit);
+    }
+    std.mem.reverse(u8, left_numbers.items);
+    try left_numbers.appendSlice(right_numbers.items[0..]);
+    const number = listToNumber(left_numbers);
+    return number;
+}
+
+fn indexWithOffset(x: i16, y: i16, col_count: i16, x_o: i16, y_o: i16) usize {
+    const idx = (y + y_o) * col_count + (x + x_o);
+    return @min(@max(idx, 0), clean_data.len);
 }
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-
-    const clean_data = try allocator.alloc(u8, data.len);
+    clean_data = try allocator.alloc(u8, data.len);
     _ = std.mem.replace(u8, data, "\n", "", clean_data);
 
     var row_it = std.mem.tokenize(u8, data, "\n");
@@ -25,28 +60,58 @@ pub fn main() !void {
 
     std.debug.print("\nSize: {d} x {d}\n{d}", .{ col_count, row_count, data.len });
 
-    for(0..col_count) |y| {
-        for(0..row_count) |x| {
+    var result: u32 = 0;
+
+    for(0..col_count) |x| {
+        for(0..row_count) |y| {
             const idx =  y * col_count + x;
             const char = clean_data[idx];
             if (char != '*') continue;
-            std.debug.print("\n{c}", .{ char });
+            std.debug.print("\n{c} [idx {d}] [{d} x {d}]", .{ char, idx, y, x });
 
+            var part_num_count: u8 = 0;
+            var gears = std.ArrayList(u32).init(allocator);
+            defer gears.deinit();
             for(0..3) |xo| {
+                // if (part_num_count == 2) break;
                 for(0..3) |yo| {
                     const y_o: i16 = @as(i16, @intCast(yo)) - 1;
                     const x_o: i16 = @as(i16, @intCast(xo)) - 1;
                     if (x_o == 0 and y_o == 0) continue;
-                    const idx_off: i16 = (@as(i16, @intCast(y)) + x_o) *
-                        @as(i16, @intCast(col_count)) +
-                        (@as(i16, @intCast(x)) + y_o);
-                    const char_around = clean_data[@min(@max(idx_off, 0), clean_data.len - 1)];
+                    const idx_off = indexWithOffset(@intCast(x),
+                                                    @intCast(y),
+                                                    @intCast(col_count),
+                                                    x_o,
+                                                    y_o);
+                    const char_around = clean_data[idx_off];
                     const digit = std.fmt.charToDigit(char_around, 10) catch {
                         continue;
                     };
-                    std.debug.print("\n>>> Found digit {d} [{d} x {d}]", .{ digit, x_o, y_o });
+                    _ = digit;
+                    part_num_count += 1;
+                    const number = try expand(@as(i16, @intCast(x)),
+                                              @as(i16, @intCast(y)),
+                                              x_o,
+                                              y_o,
+                                              @intCast(col_count));
+                    var already_in = false;
+                    for(gears.items) |item| {
+                        if (item == number) already_in = true;
+                    }
+                    if (already_in) continue;
+                    try gears.append(number);
                 }
+            }
+
+            std.debug.print("\n  → {d} Gears: {any}", .{
+                part_num_count, gears.items
+            });
+            if (gears.items.len >= 2) {
+                result += gears.items[0] * gears.items[1];
             }
         }
     }
+
+    std.debug.print("\n\nResult: {d}", .{ result });
 }
+
