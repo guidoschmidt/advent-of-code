@@ -63,7 +63,7 @@ fn part1() !void {
     defer loc.deinit();
 
     const data = @embedFile("data/day5-test.txt");
-    var parts_it = std.mem.tokenize(u8, data, "\n");
+    var parts_it = std.mem.tokenize(u8, data, "\r\n");
     var current_map: []const u8 = "";
 
     while (parts_it.next()) |part| {
@@ -110,6 +110,8 @@ fn part1() !void {
         const r_temp = mapper(&temp, r_light);
         const r_hum = mapper(&hum, r_temp);
         const r_loc = mapper(&loc, r_hum);
+        std.debug.print("\n{d} > {d} > {d} > {d} > {d} > {d} > {d} > {d}",
+                        .{ s, r_soil, r_fert, r_water, r_light, r_temp, r_hum, r_loc });
         if (lowest > r_loc)
             lowest = r_loc;
     }
@@ -136,8 +138,8 @@ fn part2() !void {
     defer hum.deinit();
     defer loc.deinit();
 
-    const data = @embedFile("data/day5-test.txt");
-    var parts_it = std.mem.tokenize(u8, data, "\n");
+    const data = @embedFile("data/day5.txt");
+    var parts_it = std.mem.tokenize(u8, data, "\r\n");
     var current_map: []const u8 = "";
 
     while (parts_it.next()) |part| {
@@ -200,8 +202,8 @@ fn part2() !void {
         const r_fert = inv_mapper(&water, r_water);
         const r_soil = inv_mapper(&fert, r_fert);
         const r_seed = inv_mapper(&soil, r_soil);
-        std.debug.print("\n{d} -> {d} -> {d} -> {d} -> {d} -> {d} -> {d}",
-                        .{ r_seed, r_soil, r_fert, r_water, r_light, r_temp, r_hum });
+        // std.debug.print("\n{d} -> {d} -> {d} -> {d} -> {d} -> {d} -> {d}",
+        //                 .{ r_seed, r_soil, r_fert, r_water, r_light, r_temp, r_hum });
         for(seeds.items) |seed_range| {
             if (r_seed >= seed_range.start and r_seed < seed_range.start + seed_range.range and l < lowest) {
                 lowest = l;
