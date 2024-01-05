@@ -6,7 +6,7 @@ pub fn build(b: *std.Build) void {
 
     const exe = b.addExecutable(.{
         .name = "advent-of-code",
-        .root_source_file = .{ .path = "src/day6.zig" },
+        .root_source_file = .{ .path = "src/day7.zig" },
         .target = target,
         .optimize = optimize,
     });

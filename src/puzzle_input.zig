@@ -23,11 +23,11 @@ pub fn getPuzzleInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
         try req.wait();
 
         var rdr = req.reader();
-        const body = try rdr.readAllAlloc(allocator, 4096);
+        const body = try rdr.readAllAlloc(allocator, 4096 * 10);
         try new_file.writeAll(body);
         return body;
     };
-    var stat = try file.stat();
+    const stat = try file.stat();
     return try file.readToEndAlloc(allocator, stat.size);
 }
 
@@ -35,6 +35,6 @@ pub fn getPuzzleTestInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
     var buf: [128]u8 = undefined;
     const file_path = try std.fmt.bufPrint(&buf, "src/data/day{d}-test.txt", .{ day });
     const file = try fs.cwd().openFile(file_path, .{});
-    var stat = try file.stat();
+    const stat = try file.stat();
     return try file.readToEndAlloc(allocator, stat.size);
 }
