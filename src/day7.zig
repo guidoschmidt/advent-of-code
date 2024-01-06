@@ -95,17 +95,18 @@ fn secondOrderingRule(hand_a: []const u8, hand_b: []const u8) bool {
     return hand_a_wins;
 }
 
-fn part1(input: []const u8) !void {
-    common.printPart1();
+fn part1(input: []const u8) void {
     var cards = std.ArrayList(Card).init(allocator);
     var row_it = std.mem.tokenize(u8, input, "\n");
     while (row_it.next()) |row| {
         var entry_it = std.mem.split(u8, row, " ");
         const hand = entry_it.next().?;
-        const rating = try calculateRankType(@ptrCast(hand.ptr));
+        const rating = calculateRankType(@ptrCast(hand.ptr)) catch Rating.NONE;
         const bid_str = entry_it.next().?;
         const bid = std.fmt.parseInt(u32, bid_str, 10) catch 0;
-        try cards.append(Card{ .bid = bid, .rating = rating, .hand = hand });
+        cards.append(Card{ .bid = bid, .rating = rating, .hand = hand }) catch {
+            std.log.err("\nCould not append Card to cards", .{});
+        };
     }
     std.mem.sort(Card, cards.items, {}, comptime struct {
         pub fn f(_: void, a: Card, b: Card) bool {
@@ -126,22 +127,10 @@ fn part1(input: []const u8) !void {
     std.debug.print("\n{d}", .{ result });
 }
 
-fn part2(input: []const u8) !void {
+fn part2(input: []const u8) void {
     _ = input;
-    common.printPart2();
 }
 
 pub fn main() !void {
-    const input = try puzzle_input.getPuzzleInput(allocator, 7);
-    // const input = try puzzle_input.getPuzzleTestInput(allocator, 7);
-
-    sw.start();
-    try part1(input);
-    const time_part1 = sw.stop();
-    common.printTime(time_part1);
-
-    sw.start();
-    try part2(input);
-    const time_part2 = sw.stop();
-    common.printTime(time_part2);
+    try common.runDay(allocator, 7, part1, part2);
 }
