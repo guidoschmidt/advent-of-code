@@ -14,11 +14,20 @@ pub fn printTime(time: u64) void {
     std.debug.print("\n— ⏲ Running time: {d:3} ms\n", .{ time });
 }
 
+pub const PuzzleInput = enum {
+    TEST,
+    PUZZLE
+};
+
 pub fn runDay(allocator: std.mem.Allocator, day: u8,
+              input_type: PuzzleInput,
               comptime part1: fn(input: []const u8) void,
               comptime part2: fn(input: []const u8) void) !void {
-    const input = try puzzle_input.getPuzzleInput(allocator, day);
-
+    const input = switch(input_type) {
+        .PUZZLE => try puzzle_input.getPuzzleInput(allocator, day),
+        .TEST => try puzzle_input.getPuzzleTestInput(allocator, day),
+    };
+    
     printPart1();
     stopwatch.start();
     part1(input);
