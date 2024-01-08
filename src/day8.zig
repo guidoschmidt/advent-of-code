@@ -9,10 +9,15 @@ const LR = struct {
     r: []const u8
 };
 
-fn part1(input: []const u8) void {
+const Walker = struct {
+    counter: u64,
+    pos: []u8,
+    instr_idx: u16,
+};
+
+fn parse(input: []const u8, nodes_map: *std.StringHashMap(LR),
+                     lr_instructions: *std.ArrayList(u8)) void {
     var row_it = std.mem.tokenize(u8, input, "\n");
-    var lr_instructions = std.ArrayList(u8).init(allocator);
-    var nodes_map = std.StringHashMap(LR).init(allocator);
     while (row_it.next())|row| {
         // LR instructions
         if (!std.mem.containsAtLeast(u8, row, 1, "=")) {
@@ -38,6 +43,15 @@ fn part1(input: []const u8) void {
             std.log.err("\nCould not append LR item to nodes map", .{});
         };
     }
+}
+
+fn part1(input: []const u8) void {
+    var nodes_map = std.StringHashMap(LR).init(allocator);
+    var lr_instructions = std.ArrayList(u8).init(allocator);
+    defer lr_instructions.deinit();
+    defer nodes_map.deinit();
+
+    parse(input, &nodes_map, &lr_instructions);
 
     var pos: []const u8 = "AAA";
     var idx: u16 = 0;
@@ -54,12 +68,102 @@ fn part1(input: []const u8) void {
         counter+=1;
     }
     std.debug.print("\nResult: {d}", .{ counter });
-    
 }
 
 fn part2(input: []const u8) void {
-    _ = input;
-    
+    var nodes_map = std.StringHashMap(LR).init(allocator);
+    var lr_instructions = std.ArrayList(u8).init(allocator);
+    defer lr_instructions.deinit();
+    defer nodes_map.deinit();
+
+    parse(input, &nodes_map, &lr_instructions);
+
+    // Find all start positions ending with 'A'
+    var positions = std.ArrayList([]const u8).init(allocator);
+    var endings = std.ArrayList([]const u8).init(allocator);
+    defer positions.deinit();
+    var key_it = nodes_map.keyIterator();
+    while (key_it.next()) |k| {
+        if (k.*[2] == 'A')
+            positions.append(k.*) catch {
+                std.log.err("\nERROR: Could not append {s} to positions", .{ k.* });
+        };
+        if (k.*[2] == 'Z')
+            endings.append(k.*) catch {
+                std.log.err("\nERROR: Could not append {s} to positions", .{ k.* });
+        };
+    }
+
+    std.debug.print("\n{d} start positons...", .{ positions.items.len });
+    for(positions.items) |pos| {
+        std.debug.print("\n{s}", .{ pos });
+    }
+
+    std.debug.print("\n{d} end positons...", .{ endings.items.len });
+    for(endings.items) |pos| {
+        std.debug.print("\n{s}", .{ pos });
+    }
+    std.debug.print("\n\n", .{});
+
+    var walkers = std.ArrayList(Walker).init(allocator);
+    defer walkers.deinit();
+    for(0..positions.items.len) |i| {
+        const pos = positions.items[i];
+        walkers.append(Walker {
+            .pos = @constCast(pos),
+            .counter = 0,
+            .instr_idx = 0
+        }) catch {
+            std.log.err("\nERROR: could not append to walkers", .{});
+        };
+        const t = std.Thread.spawn(.{}, walk, .{
+            &walkers.items[i],
+            &nodes_map,
+            &lr_instructions
+        }) catch undefined;
+        t.join();
+    }
+
+    // Calculate least common multiple
+    var counters: []u64 = allocator.alloc(u64, walkers.items.len) catch undefined;
+    for (0..walkers.items.len) |i| {
+        const walker = walkers.items[i];
+        std.debug.print("\n[{s}] {d}", .{ walker.pos, walker.counter });
+        counters[i] = walker.counter;
+    }
+    const result = lcm(u64, counters);
+    std.debug.print("\n{d}", .{ result });
+}
+
+fn lcm(comptime T: type, nums: []const T) T {
+    var r: T = nums[0];
+    for(1..nums.len) |i| {
+        r = nums[i] * r / gcd(T, nums[i], r);
+    }
+    return r;
+}
+
+fn gcd(comptime T: type, a: T, b: T) T {
+    if (b == 0)
+        return a;
+    return gcd(T, b, @mod(a, b));
+}
+
+fn walk(walker: *Walker, node_map: *std.StringHashMap(LR), lr_instructions: *std.ArrayList(u8)) void {
+    walking: while(true) {
+        const node = node_map.get(walker.pos).?;
+        const lr_instr = lr_instructions.items[walker.instr_idx];
+        const new_pos = switch(lr_instr) {
+            'L' => node.l,
+            'R' => node.r,
+            else => unreachable,
+        };
+        walker.pos.ptr = @constCast(new_pos.ptr);
+        walker.instr_idx=@intCast(@mod(walker.instr_idx + 1, lr_instructions.items.len));
+        walker.counter+=1;
+        if(new_pos[2] == 'Z')
+            break :walking;
+    }
 }
 
 pub fn main() !void {

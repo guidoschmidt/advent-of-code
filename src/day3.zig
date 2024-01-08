@@ -1,20 +1,20 @@
 const std = @import("std");
+const common = @import("common.zig");
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = gpa.allocator();
 
-    const data = @embedFile("data/day3.txt");
-    const clean_data = try allocator.alloc(u8, data.len);
-    _ = std.mem.replace(u8, data, "\n", "", clean_data);
+fn part1(input: []const u8) void {
+    var clean_input = allocator.alloc(u8, input.len) catch input; 
+    _ = std.mem.replace(u8, input, "\n", "", @constCast(clean_input));
 
-    var row_it = std.mem.tokenize(u8, data, "\n");
+    var row_it = std.mem.tokenize(u8, input, "\n");
     const first_row = row_it.next().?;
 
     const col_count = first_row.len;
     const row_count = row_it.buffer.len / col_count;
 
-    std.debug.print("\nSize: {d} x {d}\n{d}", .{ col_count, row_count, data.len });
+    std.debug.print("\nSize: {d} x {d}\n{d}", .{ col_count, row_count, input.len });
 
     var sum: u32 = 0;
 
@@ -26,14 +26,14 @@ pub fn main() !void {
             const idx =  y * col_count + x;
             // std.debug.print("{c}", .{ clean_data[idx] });
 
-            const char = clean_data[idx];
+            const char = clean_input[idx];
 
             const digit = std.fmt.charToDigit(char, 10) catch {
                 // Not a digit anymore
                 if (numbers.items.len == 0) continue;
                     var number: u32 = 0;
                     for(0..numbers.items.len) |i| {
-                        const exp = std.math.pow(u32, 10, @intCast(i));
+                        const exp = std.math.pow(u32, 10, @as(u32, @intCast(i)));
                         number += numbers.items[numbers.items.len - 1 - i] * exp;
                     }
                 std.debug.print("\nFound number: {d} {any}", .{ number, is_part_number });
@@ -53,7 +53,7 @@ pub fn main() !void {
                     const idx_off: i16 = (@as(i16, @intCast(y)) + x_o) *
                         @as(i16, @intCast(col_count)) +
                         (@as(i16, @intCast(x)) + y_o);
-                    const char_around = clean_data[@min(@max(idx_off, 0), clean_data.len - 1)];
+                    const char_around = clean_input[@min(@max(idx_off, 0), clean_input.len - 1)];
                     var is_number: bool = true;
                     _ = std.fmt.charToDigit(char_around, 10) catch {
                         is_number = false;
@@ -70,10 +70,23 @@ pub fn main() !void {
                     is_part_number = is_part_number or has_symbol_around;
                 }
             }
-            try numbers.append(digit);
+            numbers.append(digit) catch {
+                std.log.err("\nERROR: Could not append {d} to numbers", .{ digit });
+            };
             // std.debug.print("\n{d} {any}\n", .{ digit, numbers.items });
         }
     }
 
     std.debug.print("\n\nResult: {d}", .{ sum });
+
+    
+}
+
+fn part2(input: []const u8) void {
+    _ = input;
+    
+}
+
+pub fn main() !void {
+    try common.runDay(allocator, 3, .PUZZLE, part1, part2);
 }

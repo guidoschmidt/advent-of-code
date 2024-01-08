@@ -1,12 +1,15 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) void {
+fn createBuildTarget(b: *std.Build, day: u8) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    var source_file_buf: [32]u8 = undefined;
+    const source_file = std.fmt.bufPrint(&source_file_buf,
+                                         "src/day{d}.zig", .{ day }) catch "src/day1.zig";
     const exe = b.addExecutable(.{
         .name = "advent-of-code",
-        .root_source_file = .{ .path = "src/day8.zig" },
+        .root_source_file = .{ .path = source_file },
         .target = target,
         .optimize = optimize,
     });
@@ -14,12 +17,38 @@ pub fn build(b: *std.Build) void {
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
 
+    const run_step = b.step("run", "Run the app");
+    run_step.dependOn(&run_cmd.step);
+}
+
+pub fn build(b: *std.Build) void {
+
+   const in = std.io.getStdIn();
+    var buf = std.io.bufferedReader(in.reader());
+
+    // Get the Reader interface from BufferedReader
+    var r = buf.reader();
+
     // This allows the user to pass arguments to the application in the build
     // command itself, like this: `zig build run -- arg1 arg2 etc`
     if (b.args) |args| {
-        run_cmd.addArgs(args);
+        const day = std.fmt.parseInt(u8, args[0], 10) catch 1;
+        createBuildTarget(b, day);
+        return;
     }
 
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
+    // If no argument was given, ask the user which day should be build/run
+    std.debug.print("\nWhich day should be build/run [1 - 24]? ", .{});
+    // Ideally we would want to issue more than one read
+    // otherwise there is no point in buffering.
+    var msg_buf: [4096]u8 = undefined;
+    var input = r.readUntilDelimiterOrEof(&msg_buf, '\n') catch "";
+    if (input) |input_txt| {
+        var day = std.fmt.parseInt(u8, input_txt, 10) catch {
+            std.debug.print("\nPlease give a number between 1 and 24", .{});
+            return;
+        };
+        std.debug.print("Selected day {d}\n~ Compiling...\n", .{ day });
+        createBuildTarget(b, day);
+    }
 }
