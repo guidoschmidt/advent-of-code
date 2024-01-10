@@ -42,9 +42,9 @@ pub fn build(b: *std.Build) void {
     // Ideally we would want to issue more than one read
     // otherwise there is no point in buffering.
     var msg_buf: [4096]u8 = undefined;
-    var input = r.readUntilDelimiterOrEof(&msg_buf, '\n') catch "";
+    const input = r.readUntilDelimiterOrEof(&msg_buf, '\n') catch "";
     if (input) |input_txt| {
-        var day = std.fmt.parseInt(u8, input_txt, 10) catch {
+        const day = std.fmt.parseInt(u8, input_txt, 10) catch {
             std.debug.print("\nPlease give a number between 1 and 24", .{});
             return;
         };
