@@ -18,7 +18,7 @@ pub fn getPuzzleInputFromServer(allocator: std.mem.Allocator, day: u8, file_path
         std.log.err("\nPlease set AOC_COOKIE env variable", .{});
         return "";
     }
-    //std.debug.print("\n{s}", .{ cookie_from_env.? });
+    std.debug.print("\nAOC_COOKIE: {s}", .{ cookie_from_env.? });
     try headers.append("Cookie", cookie_from_env.?);
     defer headers.deinit();
 
