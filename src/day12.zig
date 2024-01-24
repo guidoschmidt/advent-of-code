@@ -1,3 +1,5 @@
+// Helped a lot:
+// https://www.reddit.com/r/adventofcode/comments/18gqqbh/2023_day_12_part_1_solved_in_under_three_minutes/
 const std = @import("std");
 const common = @import("common.zig");
 
@@ -9,25 +11,50 @@ const SpringGroup = struct {
     count: u8,
 };
 
-fn factorial(v: u32) u32 {
+fn factorial(v: u128) u128 {
     if (v == 1) return v;
     return v * factorial(v - 1);
 }
 
-
-fn combinations(k: u32, n: u32) u32 {
+fn combinations(k: u128, n: u128) u128 {
     const t = n + k - 1;
     const u = k;
     return factorial(t) / (factorial(u) * factorial(t - u));
+}
+
+pub fn unfold(springs: []const u8, numeric: []const usize) SpringRecord {
+    var unfolded_springs = allocator.alloc(u8, springs.len * 5) catch unreachable;
+    for (0..unfolded_springs.len) |idx| {
+        const mod_idx = std.math.mod(usize, idx, springs.len) catch unreachable;
+        unfolded_springs[idx] = springs[mod_idx];
+    }
+    var unfolded_numeric = allocator.alloc(usize, numeric.len * 5) catch unreachable;
+    for (0..unfolded_numeric.len) |idx| {
+        const mod_idx = std.math.mod(usize, idx, numeric.len) catch unreachable;
+        unfolded_numeric[idx] = numeric[mod_idx];
+    }
+    std.debug.print("\n{s} → {s}", .{ springs, unfolded_springs });
+    std.debug.print("\n{any} → {any}", .{ numeric, unfolded_numeric });
+    return SpringRecord {
+        .springs = unfolded_springs,
+        .numeric = unfolded_numeric,
+    };
 }
 
 const PermutationError = error {
     NoMorePermutation,
 };
 
+const SpringsConfig = struct {
+    idx: usize,
+    configuration: []const u8,
+};
+
+
+
 const SpringRecord  = struct {
     springs: []const u8 = undefined,
-    numeric: []const u8 = undefined,
+    numeric: []const usize = undefined,
     variables: std.ArrayList(usize) =  std.ArrayList(usize).init(allocator),
     num_of_possibilities: u8 = undefined,
 
@@ -78,63 +105,81 @@ const SpringRecord  = struct {
         return arr;
     }
 
-
     pub fn bruteForce(self: *SpringRecord) u32 {
+        self.findVariables();
+        // std.debug.print("\n", .{});
+        // self.printSprings(self.springs);
+        // std.debug.print("\n{any}", .{ self.variables.items });
+
+        std.debug.print("\n{d}", .{ combinations(2, @intCast(self.variables.items.len * 5)) });
+        
         var working_combinations: u32 = 0;
+        var configurations = std.ArrayList(SpringsConfig).init(allocator);
 
-        var configuration: []u8 = allocator.alloc(u8, self.variables.items.len) catch unreachable;
-        var test_springs = allocator.dupe(u8, self.springs) catch unreachable;
-        var tested_configurations = std.BufSet.init(allocator);
+        var test_config_a = allocator.dupe(u8, self.springs) catch unreachable;
+        test_config_a[self.variables.items[0]] = '#';
+        configurations.append(SpringsConfig{
+            .idx = 0,
+            .configuration = test_config_a
+        }) catch unreachable;
+        var test_config_b = allocator.dupe(u8, self.springs) catch unreachable;
+        test_config_b[self.variables.items[0]] = '.';
+        configurations.append(SpringsConfig{
+            .idx = 0,
+            .configuration = test_config_b
+        }) catch unreachable;
 
-        for (0..self.variables.items.len) |p| {
-            // 1. Initialize configurations
-            for(0..configuration.len) |i| {
-                if (i <= p) {
-                    configuration[i] = '#';
-                    continue;
-                }
-                configuration[i] = '.';
+        while(configurations.items.len > 0) {
+            var last_test_config = configurations.pop();
+            const contains_variable = std.mem.containsAtLeast(u8, last_test_config.configuration, 1, "?");
+            if (contains_variable) {
+                const test_springs_a = allocator.dupe(u8, last_test_config.configuration) catch unreachable;
+                test_springs_a[self.variables.items[last_test_config.idx + 1]] = '#';
+                configurations.append(SpringsConfig{
+                    .configuration = test_springs_a,
+                    .idx = last_test_config.idx + 1,
+                }) catch unreachable;
+
+                const test_springs_b = allocator.dupe(u8, last_test_config.configuration) catch unreachable;
+                test_springs_b[self.variables.items[last_test_config.idx + 1]] = '.';
+                configurations.append(SpringsConfig{
+                    .configuration = test_springs_b,
+                    .idx = last_test_config.idx + 1,
+                }) catch unreachable;
             }
-
-            // 2. Generate possible permutations
-            while (true) {
-                // 3. Test permutation
-                for (0..configuration.len) |ci| {
-                    var seq_idx = self.variables.items[ci];
-                    var val = configuration[ci];
-                    test_springs[seq_idx] = val;
-                }
-                // std.debug.print("\n    ", .{});
-                // self.printSprings(test_springs);
-                if (self.testCriteria(test_springs)) {
-                    // std.debug.print("\n \x1B[32m✓\x1B[0m", .{});
+            else {
+                // std.debug.print("\n", .{});
+                // self.printSprings(last_test_config.configuration);
+                // std.debug.print("\n{any}", .{ self.numeric });
+                if (self.testCriteria(last_test_config.configuration)) {
+                    // std.debug.print("✓", .{});
                     working_combinations += 1;
-
-                    if (!tested_configurations.contains(configuration)) {
-                        tested_configurations.insert(configuration) catch unreachable;
-                    }
+                    // already_tested.insert(last_test_config.configuration) catch unreachable;
                 }
-                
-                configuration = self.nextPerm(configuration) catch {
-                    break;
-                };
             }
         }
 
-        if (working_combinations != tested_configurations.count()) {
-            std.debug.print("\nPossible working combinations: \x1B[32m{d}\x1B[0m", .{ working_combinations });
-            std.debug.print("\nFrom Set: \x1B[32m{d}\x1B[0m", .{ tested_configurations.count() });
-        }
         return working_combinations;
     }
 
     pub fn testCriteria(self: *SpringRecord, springs: []const u8) bool {
+        if (self.springs.len != springs.len) return false;
+
+        for(0..springs.len) |idx| {
+            if (self.springs[idx] == '.' or self.springs[idx] == '#') {
+                if (springs[idx] != self.springs[idx]) {
+                    return false;
+                }
+            }
+        }
+
         var split_it = std.mem.tokenize(u8, springs, ".");
-        var group_counts = std.ArrayList(u8).init(allocator);
+        var group_counts = std.ArrayList(usize).init(allocator);
         while(split_it.next()) |split| {
             group_counts.append(@intCast(split.len)) catch unreachable;
         }
-        return std.mem.eql(u8, group_counts.items, self.numeric);
+        const is_valid = std.mem.eql(usize, group_counts.items, self.numeric);
+        return is_valid;
     }
 
     pub fn format(self: SpringRecord,
@@ -160,32 +205,32 @@ fn part1(input: []const u8) void {
 
     var records = std.ArrayList(SpringRecord).init(allocator);
 
+    var row_num: u32 = 0;
     while(row_it.next()) |row| {
         var entry_it = std.mem.split(u8, row, " ");
         const springs = entry_it.next().?;
         const numeric_str = entry_it.next().?;
 
         var num_it = std.mem.tokenize(u8, numeric_str, ",");
-        var numeric = std.ArrayList(u8).init(allocator);
+        var numeric = std.ArrayList(usize).init(allocator);
         while(num_it.next()) |v| {
-            const n = std.fmt.charToDigit(v[0], 10) catch unreachable;
+            const n = std.fmt.parseInt(usize, v, 10) catch unreachable;
             numeric.append(n) catch unreachable;
         }
+        // std.debug.print("\n{d}: {any}", .{ row_num, numeric.items });
         
-        const sprintRecord = SpringRecord{
+        const spring_record = SpringRecord{
             .springs = springs,
             .numeric = numeric.items,
         };
-        records.append(sprintRecord) catch unreachable;
+        records.append(spring_record) catch unreachable;
+        row_num += 1;
     }
 
     var sum: u32 = 0;
     for(0..records.items.len) |i| {
-        std.debug.print("\n- {d}", .{ i });
-        var record = records.items[i];
-        record.findVariables();
-        std.debug.print("\n   {any}", .{ record });
-        const working_combinations = record.bruteForce();
+        const working_combinations = records.items[i].bruteForce();
+        std.debug.print("\n- {d} → \x1B[36m{d}\x1B[0m", .{ i, working_combinations });
         sum += working_combinations;
     }
 
@@ -193,9 +238,44 @@ fn part1(input: []const u8) void {
 }
 
 fn part2(input: []const u8) void {
-    _ = input;
+    var row_it = std.mem.tokenize(u8, input, "\n");
+
+    var records = std.ArrayList(SpringRecord).init(allocator);
+
+    var row_num: u32 = 0;
+    while(row_it.next()) |row| {
+        var entry_it = std.mem.split(u8, row, " ");
+        const springs = entry_it.next().?;
+        const numeric_str = entry_it.next().?;
+
+        var num_it = std.mem.tokenize(u8, numeric_str, ",");
+        var numeric = std.ArrayList(usize).init(allocator);
+        while(num_it.next()) |v| {
+            const n = std.fmt.parseInt(usize, v, 10) catch unreachable;
+            numeric.append(n) catch unreachable;
+        }
+        // std.debug.print("\n{d}: {any}", .{ row_num, numeric.items });
+        
+        const spring_record = SpringRecord{
+            .springs = springs,
+            .numeric = numeric.items,
+        };
+        records.append(spring_record) catch unreachable;
+        // records.append(unfold(spring_record.springs, spring_record.numeric)) catch unreachable;
+        row_num += 1;
+    }
+
+    var sum: u32 = 0;
+    for(0..records.items.len) |i| {
+        var record = records.items[i];
+        const working_combinations = record.bruteForce();
+        std.debug.print("\n- {d} → \x1B[36m{d}\x1B[0m", .{ i, working_combinations });
+        sum += working_combinations;
+    }
+
+    std.debug.print("\n\nResult: {d}\n", .{ sum });
 }
 
 pub fn main() !void {
-    try common.runDay(allocator, 12, .PUZZLE, part1, part2);
+    try common.runDay(allocator, 12, .TEST, part1, part2);
 }
