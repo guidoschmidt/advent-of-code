@@ -19,6 +19,17 @@ fn createBuildTarget(b: *std.Build, day: u8) void {
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
+
+    // Testing
+    const unit_tests = b.addTest(.{
+        .root_source_file = .{ .path = source_file },
+        .target = target,
+        .optimize = optimize,
+    });
+    const run_unit_tests = b.addRunArtifact(unit_tests);
+    const test_step = b.step("test", "Run test cases");
+    test_step.dependOn(&run_unit_tests.step);
 }
 
 pub fn build(b: *std.Build) void {

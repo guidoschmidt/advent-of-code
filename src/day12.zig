@@ -1,281 +1,259 @@
-// Helped a lot:
-// https://www.reddit.com/r/adventofcode/comments/18gqqbh/2023_day_12_part_1_solved_in_under_three_minutes/
+//! Sources:
+//! - https://stackoverflow.blog/2022/01/31/the-complete-beginners-guide-to-dynamic-programming/
+//! - https://de.wikipedia.org/wiki/Dynamische_Programmierung
+//! - https://qsantos.fr/2024/01/04/dynamic-programming-is-not-black-magic/
+//! - https://github.com/qsantos/advent-of-code/blob/master/2023/day12/src/main.rs#L6-L46
+//!
+//! Zig Examples to examplify the concept
+//! - https://github.com/guidoschmidt/examples.zig/blob/main/src/dynamic-programming.zig
+//! - https://github.com/guidoschmidt/examples.zig/blob/main/src/pair-of-numbers.zig
+
 const std = @import("std");
 const common = @import("common.zig");
+const Allocator = std.mem.Allocator;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-
-const SpringGroup = struct {
-    springs: []const u8,
-    count: u8,
-};
-
-fn factorial(v: u128) u128 {
-    if (v == 1) return v;
-    return v * factorial(v - 1);
+fn visualizeCache(cache: *[][]usize) void {
+    std.debug.print("\nCACHE:\n[", .{});
+    for(0..cache.len) |i| {
+        std.debug.print("{any}.", .{ cache.*[i] });
+    }
+    std.debug.print("]\n", .{});
 }
 
-fn combinations(k: u128, n: u128) u128 {
-    const t = n + k - 1;
-    const u = k;
-    return factorial(t) / (factorial(u) * factorial(t - u));
+fn countCombinationsMemoizedNew(allocator: Allocator, springs: []const u8, groups: []const usize) !usize {
+    // std.debug.print("\n-----------------------\nSprings , Groups:\n{s} , {any}\n\n", .{ springs, groups });
+    var cache = try allocator.alloc([]usize, springs.len + 1);
+
+
+    // Initialize the cache
+    for(0..springs.len + 1) |i| {
+        cache[i] = try allocator.alloc(usize, groups.len + 1);
+        for(0..groups.len + 1) |j| {
+            cache[i][j] = 0;
+        }
+    }
+    cache[0][0] = 1;
+
+    // Release memory of cache
+    defer {
+        for (0..springs.len + 1) |i| {
+            allocator.free(cache[i]);
+        }
+        allocator.free(cache);
+    }
+
+    for (1..springs.len + 1) |s| {
+        const spring = springs[s - 1];
+        // std.debug.print("\n{s}LOOP {c}{s}", .{ common.green, spring, common.clear });
+
+        for (0..groups.len + 1) |g| {
+            // std.debug.print("\ns={d} / g={d}", .{ s, g });
+
+            var count: usize = 0;
+
+            // visualizeCache(&cache);
+
+            // Simple case
+            if (spring == '.' or spring == '?') {
+                const prev = cache[s - 1][g];
+                count += prev;
+                // std.debug.print("\nCASE 1 {s}no group:{s} {d}, [+{d}]", .{ common.light_blue, common.clear, count, prev });
+            }
+
+            // Groups
+            if (g > 0) {
+                const group_size = groups[g - 1];
+                // std.debug.print("\nCASE 2 {s}group of size {d}{s}", .{ common.light_blue, group_size, common.clear });
+                const partial = springs[(s -| 1) -| (group_size -| 1)..s];
+                // std.debug.print("\nPartial: {s}{s}{s}", .{ common.yellow, partial, common.clear });
+                var test_all = true;
+                for (partial) |item| {
+                    test_all = test_all and (item == '?' or item == '#');
+                }
+
+                if (s >= group_size) {
+                    // std.debug.print("\nCASE 3 {s}s={d} >= group_size={d}{s}", .{ common.light_blue, s, group_size, common.clear });
+                    if (test_all) {
+                        if ((s) == group_size) {
+                            // std.debug.print("\nCASE 3.1 {s}s={d} == group_size={d}{s}", .{ common.light_blue, s, group_size, common.clear });
+                            const prev = cache[0][g - 1];
+                            count += prev;
+                            // std.debug.print("{d} [+{d}]", .{ count, prev });
+                        } else {
+                            // std.debug.print("\nCASE 4 {s}group_size={d} > {d}{s}", .{ common.light_blue, group_size, g, common.clear });
+                            const separator = springs[(s - 1) - (group_size - 1) - 1];
+                            // std.debug.print("{c}", .{ separator });
+                            if (separator == '.' or separator == '?') {
+                                const prev = cache[s - group_size - 1][g - 1];
+                                count += prev;
+                                // std.debug.print("{d} [+{d}]", .{ count, prev });
+                            }
+                        }
+                    }
+                }
+            }
+            // std.debug.print("\n    {s}---> {d}{s}", .{ common.blue, count, common.clear });
+            cache[s][g] = count;
+        }
+        // std.debug.print("\n", .{});
+    }
+
+    // visualizeCache(&cache);
+    return cache[springs.len][groups.len];
 }
 
-pub fn unfold(springs: []const u8, numeric: []const usize) SpringRecord {
-    var unfolded_springs = allocator.alloc(u8, springs.len * 5) catch unreachable;
-    for (0..unfolded_springs.len) |idx| {
-        const mod_idx = std.math.mod(usize, idx, springs.len) catch unreachable;
-        unfolded_springs[idx] = springs[mod_idx];
+pub fn unfold(allocator: Allocator, springs: []const u8, groups: []const usize) !struct{springs: []const u8, groups: []const usize} {
+    var unfolded_springs = try allocator.alloc(u8, ((springs.len + 1) * 5) - 1);
+
+    var start: usize = 0;
+    for(0..5) |_| {
+        const end = start + springs.len + 1;
+        for (unfolded_springs[start..end - 1], springs) |*d, s| {
+            d.* = s;
+        }
+        if (end < unfolded_springs.len)
+            unfolded_springs[end - 1] = '?';
+        start = end;
     }
-    var unfolded_numeric = allocator.alloc(usize, numeric.len * 5) catch unreachable;
-    for (0..unfolded_numeric.len) |idx| {
-        const mod_idx = std.math.mod(usize, idx, numeric.len) catch unreachable;
-        unfolded_numeric[idx] = numeric[mod_idx];
+
+    var unfolded_groups = try allocator.alloc(usize, groups.len * 5);
+    for (0..unfolded_groups.len) |idx| {
+        const mod_idx = try std.math.mod(usize, idx, groups.len);
+        unfolded_groups[idx] = groups[mod_idx];
     }
-    std.debug.print("\n{s} → {s}", .{ springs, unfolded_springs });
-    std.debug.print("\n{any} → {any}", .{ numeric, unfolded_numeric });
-    return SpringRecord {
+
+    // std.debug.print("\n\n--- UNFOLDING ---\n\x1B[35m{s}\n\x1B[36m", .{ springs });
+    // var i: usize = 0;
+    // var j: usize = 0;
+    // while(i < unfolded_springs.len) : (i += 1) {
+    //     if (i > 0 and (try std.math.mod(usize, i - j, springs.len)) == 0) {
+    //         std.debug.print("\x1B[33m___{c}___\x1B[0m", .{ unfolded_springs[i] });
+    //         i += 1;
+    //         j += 1;
+    //     }
+    //     std.debug.print("\x1B[36m{c}", .{ unfolded_springs[i] });
+    // }
+    // std.debug.print("\x1B[0m\n[{d}] → [{d}]", .{ springs.len, unfolded_springs.len });
+    // std.debug.print("\n{any}\n{any}", .{ groups, unfolded_groups });
+
+    return .{
         .springs = unfolded_springs,
-        .numeric = unfolded_numeric,
+        .groups = unfolded_groups,
     };
 }
 
-const PermutationError = error {
-    NoMorePermutation,
-};
-
-const SpringsConfig = struct {
-    idx: usize,
-    configuration: []const u8,
-};
-
-
-
-const SpringRecord  = struct {
-    springs: []const u8 = undefined,
-    numeric: []const usize = undefined,
-    variables: std.ArrayList(usize) =  std.ArrayList(usize).init(allocator),
-    num_of_possibilities: u8 = undefined,
-
-    fn printSprings(self: *SpringRecord, springs: []const u8) void {
-        for(0..springs.len) |s| {
-            const needle = [_]usize{ s };
-            if (std.mem.containsAtLeast(usize, self.variables.items, 1, &needle)) {
-                std.debug.print("\x1B[31m{c}\x1B[0m", .{ springs[s] });
-                continue;
-            }
-            std.debug.print("{c}", .{ springs[s] });
-        }
-    }
-
-    pub fn findVariables(self: *SpringRecord) void {
-        for(0..self.springs.len) |i| {
-            if (self.springs[i] == '?') {
-                self.variables.append(i) catch unreachable;
-            }
-        }
-    }
-
-    pub fn nextPerm(self: *SpringRecord, arr: []u8) ![]u8 {
-        _ = self;
-        var i = arr.len - 1;
-        while(i > 0 and arr[i - 1] >= arr[i]) {
-            i -= 1;
-        }
-        if (i <= 0) {
-            return PermutationError.NoMorePermutation;
-        }
-        var j = arr.len - 1;
-        while(arr[j] <= arr[i - 1]) {
-            j -= 1;
-        }
-        var tmp = arr[i - 1];
-        arr[i - 1] = arr[j];
-        arr[j] = tmp;
-
-        j = arr.len - 1;
-        while (i < j) {
-            tmp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = tmp;
-            i += 1;
-            j -= 1;
-        }
-        return arr;
-    }
-
-    pub fn bruteForce(self: *SpringRecord) u32 {
-        self.findVariables();
-        // std.debug.print("\n", .{});
-        // self.printSprings(self.springs);
-        // std.debug.print("\n{any}", .{ self.variables.items });
-
-        std.debug.print("\n{d}", .{ combinations(2, @intCast(self.variables.items.len * 5)) });
-        
-        var working_combinations: u32 = 0;
-        var configurations = std.ArrayList(SpringsConfig).init(allocator);
-
-        var test_config_a = allocator.dupe(u8, self.springs) catch unreachable;
-        test_config_a[self.variables.items[0]] = '#';
-        configurations.append(SpringsConfig{
-            .idx = 0,
-            .configuration = test_config_a
-        }) catch unreachable;
-        var test_config_b = allocator.dupe(u8, self.springs) catch unreachable;
-        test_config_b[self.variables.items[0]] = '.';
-        configurations.append(SpringsConfig{
-            .idx = 0,
-            .configuration = test_config_b
-        }) catch unreachable;
-
-        while(configurations.items.len > 0) {
-            var last_test_config = configurations.pop();
-            const contains_variable = std.mem.containsAtLeast(u8, last_test_config.configuration, 1, "?");
-            if (contains_variable) {
-                const test_springs_a = allocator.dupe(u8, last_test_config.configuration) catch unreachable;
-                test_springs_a[self.variables.items[last_test_config.idx + 1]] = '#';
-                configurations.append(SpringsConfig{
-                    .configuration = test_springs_a,
-                    .idx = last_test_config.idx + 1,
-                }) catch unreachable;
-
-                const test_springs_b = allocator.dupe(u8, last_test_config.configuration) catch unreachable;
-                test_springs_b[self.variables.items[last_test_config.idx + 1]] = '.';
-                configurations.append(SpringsConfig{
-                    .configuration = test_springs_b,
-                    .idx = last_test_config.idx + 1,
-                }) catch unreachable;
-            }
-            else {
-                // std.debug.print("\n", .{});
-                // self.printSprings(last_test_config.configuration);
-                // std.debug.print("\n{any}", .{ self.numeric });
-                if (self.testCriteria(last_test_config.configuration)) {
-                    // std.debug.print("✓", .{});
-                    working_combinations += 1;
-                    // already_tested.insert(last_test_config.configuration) catch unreachable;
-                }
-            }
-        }
-
-        return working_combinations;
-    }
-
-    pub fn testCriteria(self: *SpringRecord, springs: []const u8) bool {
-        if (self.springs.len != springs.len) return false;
-
-        for(0..springs.len) |idx| {
-            if (self.springs[idx] == '.' or self.springs[idx] == '#') {
-                if (springs[idx] != self.springs[idx]) {
-                    return false;
-                }
-            }
-        }
-
-        var split_it = std.mem.tokenize(u8, springs, ".");
-        var group_counts = std.ArrayList(usize).init(allocator);
-        while(split_it.next()) |split| {
-            group_counts.append(@intCast(split.len)) catch unreachable;
-        }
-        const is_valid = std.mem.eql(usize, group_counts.items, self.numeric);
-        return is_valid;
-    }
-
-    pub fn format(self: SpringRecord,
-                  comptime fmt: []const u8,
-                  options: std.fmt.FormatOptions,
-                  writer: anytype) !void {
-        _ = fmt;
-        _ = options;
-        for(0..self.springs.len) |s| {
-            const needle = [_]usize{ s };
-            if (std.mem.containsAtLeast(usize, self.variables.items, 1, &needle)) {
-                try writer.print("\x1B[31m{c}\x1B[0m", .{ self.springs[s] });
-                continue;
-            }
-            try writer.print("{c}", .{ self.springs[s] });
-        }
-        try writer.print(" — {any}", .{ self.numeric });
-    }
-};
-
-fn part1(input: []const u8) void {
+fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var row_it = std.mem.tokenize(u8, input, "\n");
 
-    var records = std.ArrayList(SpringRecord).init(allocator);
+    var sum: u128 = 0;
 
-    var row_num: u32 = 0;
     while(row_it.next()) |row| {
         var entry_it = std.mem.split(u8, row, " ");
         const springs = entry_it.next().?;
-        const numeric_str = entry_it.next().?;
 
-        var num_it = std.mem.tokenize(u8, numeric_str, ",");
-        var numeric = std.ArrayList(usize).init(allocator);
-        while(num_it.next()) |v| {
-            const n = std.fmt.parseInt(usize, v, 10) catch unreachable;
-            numeric.append(n) catch unreachable;
+        const groups_str = entry_it.next().?;
+        var groups_it = std.mem.tokenize(u8, groups_str, ",");
+        var groups_list  = std.ArrayList(usize).init(allocator);
+        var i: usize = 0;
+        while(groups_it.next()) |g| : (i += 1) {
+            const n = try std.fmt.parseInt(usize, g, 10);
+            try groups_list.append(n);
         }
-        // std.debug.print("\n{d}: {any}", .{ row_num, numeric.items });
-        
-        const spring_record = SpringRecord{
-            .springs = springs,
-            .numeric = numeric.items,
-        };
-        records.append(spring_record) catch unreachable;
-        row_num += 1;
-    }
-
-    var sum: u32 = 0;
-    for(0..records.items.len) |i| {
-        const working_combinations = records.items[i].bruteForce();
-        std.debug.print("\n- {d} → \x1B[36m{d}\x1B[0m", .{ i, working_combinations });
-        sum += working_combinations;
+        const groups = groups_list.items;
+        sum += try countCombinationsMemoizedNew(allocator, springs, groups);
     }
 
     std.debug.print("\n\nResult: {d}\n", .{ sum });
 }
 
-fn part2(input: []const u8) void {
+fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var row_it = std.mem.tokenize(u8, input, "\n");
 
-    var records = std.ArrayList(SpringRecord).init(allocator);
+    var sum: usize = 0;
 
-    var row_num: u32 = 0;
     while(row_it.next()) |row| {
         var entry_it = std.mem.split(u8, row, " ");
         const springs = entry_it.next().?;
-        const numeric_str = entry_it.next().?;
 
-        var num_it = std.mem.tokenize(u8, numeric_str, ",");
-        var numeric = std.ArrayList(usize).init(allocator);
-        while(num_it.next()) |v| {
-            const n = std.fmt.parseInt(usize, v, 10) catch unreachable;
-            numeric.append(n) catch unreachable;
+        const groups_str = entry_it.next().?;
+        var groups_it = std.mem.tokenize(u8, groups_str, ",");
+        var groups_list  = std.ArrayList(usize).init(allocator);
+        var i: usize = 0;
+        while(groups_it.next()) |g| : (i += 1) {
+            const n = try std.fmt.parseInt(usize, g, 10);
+            try groups_list.append(n);
         }
-        // std.debug.print("\n{d}: {any}", .{ row_num, numeric.items });
-        
-        const spring_record = SpringRecord{
-            .springs = springs,
-            .numeric = numeric.items,
-        };
-        records.append(spring_record) catch unreachable;
-        // records.append(unfold(spring_record.springs, spring_record.numeric)) catch unreachable;
-        row_num += 1;
-    }
 
-    var sum: u32 = 0;
-    for(0..records.items.len) |i| {
-        var record = records.items[i];
-        const working_combinations = record.bruteForce();
-        std.debug.print("\n- {d} → \x1B[36m{d}\x1B[0m", .{ i, working_combinations });
-        sum += working_combinations;
+        std.debug.print("\n{s} -- {any}", .{ springs, groups_list.items });
+        const unfolded = try unfold(allocator, springs, groups_list.items);
+        defer {
+            allocator.free(unfolded.springs);
+            allocator.free(unfolded.groups);
+            groups_list.deinit();
+        }
+        
+        const result = try countCombinationsMemoizedNew(allocator, unfolded.springs, unfolded.groups);
+        std.debug.print("\n\x1B[32m→ Possibilities {d}\x1B[0m", .{ result });
+        sum += result;
     }
 
     std.debug.print("\n\nResult: {d}\n", .{ sum });
 }
 
 pub fn main() !void {
-    try common.runDay(allocator, 12, .TEST, part1, part2);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    try common.runDay(allocator, 12, .PUZZLE, part1, part2);
+}
+
+test "simple cases" {
+    var allocator = std.testing.allocator;
+
+    // Single chars
+    var springs: []const u8 = "?";
+    var groups = &[_]usize{ 1 };
+    var result: usize = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 1);
+
+    springs = ".";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 0);
+
+    springs = "#";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 1);
+
+    // Two characters
+    springs = "??";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 2);
+
+    springs = "..";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 0);
+
+    springs = "##";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 0);
+
+    // Three characters
+    springs = "???";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 3);
+
+    springs = "...";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 0);
+
+    springs = "###";
+    groups = &[_]usize{ 1 };
+    result = try countCombinationsMemoizedNew(allocator, springs, groups);
+    try std.testing.expectEqual(result, 0);
 }
