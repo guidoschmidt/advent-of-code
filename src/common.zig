@@ -25,7 +25,7 @@ pub fn printTime(time: u64) void {
 }
 
 pub const PuzzleInput = enum {
-    TEST,
+    EXAMPLE,
     PUZZLE
 };
 
@@ -35,7 +35,7 @@ pub fn runDay(allocator: std.mem.Allocator, day: u8,
               comptime part2: fn(allocator: Allocator, input: []const u8) anyerror!void) !void {
     const input = switch(input_type) {
         .PUZZLE => try puzzle_input.getPuzzleInput(allocator, day),
-        .TEST => try puzzle_input.getPuzzleTestInput(allocator, day),
+        .EXAMPLE => try puzzle_input.getPuzzleTestInput(allocator, day),
     };
     
     printPart1();
