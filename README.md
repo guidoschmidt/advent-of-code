@@ -5,3 +5,12 @@
    [zvm](https://github.com/tristanisham/zvm)
 2. Run `zig build run` to select a specific day
 3. Run `zig build run -- DAY`, e.g. `zig build run -- 9` to run a specific day 
+
+
+### Notes
+
+- Day 13
+  - Part 1: Brute force
+  - Part 2: Dynamic Programming
+- Day 14
+  - Part 1: solve using recursion
