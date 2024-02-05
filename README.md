@@ -15,5 +15,5 @@
 - Day 14
   - Part 1: solve using recursion
 - Day 16
-  - Part 1: nasty bug where /<<< would reflect upwards instead of downwards
+  - Part 1: nasty bug where /<<< would reflect upwards instead of downwards.
     Need to test the single bits and pieces more carefully
