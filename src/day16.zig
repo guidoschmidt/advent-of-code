@@ -31,14 +31,19 @@ fn printMap(map: *[][]u8, trace: ?Trace) void {
 }
 
 fn animateMap(map: *[][]u8, trace: ?Trace) void {
+    std.debug.print("\n", .{});
     for(0..map.len) |x| {
         const row = map.*[x];
         for(0..row.len) |y| {
-            std.debug.print("\x1B[{d};{d}H", .{ x, y });
+            std.debug.print("\x1B[{d};{d}H", .{ 10 + x, 10 + y });
             if (trace != null and trace.?.y == x and trace.?.x == y) {
                 std.debug.print("{s}", .{ common.red });
             }
-            std.debug.print("{c}{s}", .{ map.*[x][y], common.clear });
+            const map_value = map.*[x][y];
+            switch (map_value) {
+                '.' => std.debug.print("{c}{s}", .{ ' ', common.clear }),
+                else => std.debug.print("{c}{s}", .{ map_value, common.clear }),
+            }
         }
     }
     std.time.sleep(1000 * 1000 * 30);
@@ -59,7 +64,6 @@ fn countEnergized(map: *[][]u8) u32 {
 
 fn traceBeam(gpa: std.mem.Allocator, map: *[][]u8, beam_map: *[][]u8, beam_split_map: *[][]u2, trace: Trace) ![]Trace {
     // printMap(beam_map, trace);
-    // animateMap(beam_map, trace);
     var trace_list = std.ArrayList(Trace).init(gpa);
     if (trace.x >= 0 and
         trace.y >= 0 and
@@ -185,15 +189,16 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
         beam_split_map[x] = try gpa.alloc(u2, height);
         for(0..map[x].len) |y| {
             map[x][y] = cleaned_input[x * height + y];
-            beam_map[x][y] = '.';
+            beam_map[x][y] = cleaned_input[x * height + y];
             beam_split_map[x][y] = 0;
         }
     }
 
-    printMap(&map, null);
+    // printMap(&map, null);
 
     var trace_list = std.ArrayList(Trace).init(gpa);
     try trace_list.append(Trace{.x = -1, .y = 0, .dx = 1, .dy = 0});
+    var idx: u32 = 0;
     while (trace_list.items.len > 0) {
         const next_trace = trace_list.pop();
         var new_traces = try traceBeam(gpa, &map, &beam_map, &beam_split_map, next_trace);
@@ -203,12 +208,17 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
         for (new_traces) |new_trace| {
             try trace_list.append(new_trace);
         }
+        idx += 1;
+
+        if (try std.math.mod(u32, idx, 200) == 0) {
+            animateMap(&beam_map, null);
+        }
     }
 
-    printMap(&beam_map, null);
+    // printMap(&beam_map, null);
 
     var result = countEnergized(&beam_map);
-    std.debug.print("\n\n{d}\n", .{ result });
+    std.debug.print("\n\nResullt: {d}\n", .{ result });
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
