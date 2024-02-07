@@ -17,3 +17,5 @@
 - Day 16
   - Part 1: nasty bug where /<<< would reflect upwards instead of downwards.
     Need to test the single bits and pieces more carefully
+- Day 18:
+  - Part 1: terminal buffer was too small to draw the whole map, used [pgm file format](https://de.wikipedia.org/wiki/Portable_Anymap#Kopfdaten)
