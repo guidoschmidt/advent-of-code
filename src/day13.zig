@@ -1,4 +1,3 @@
-// Source: https://github.com/qsantos/advent-of-code/blob/master/2023/day12/src/main.rs#L6-L46
 const std = @import("std");
 const common = @import("common.zig");
 
@@ -43,9 +42,7 @@ const Pattern = struct {
         }
     }
 
-    pub fn findReflection(self: *Pattern) !usize {
-        std.debug.print("\n{any}", .{ self.data });
-
+    pub fn findReflection(self: *Pattern, allocator: Allocator) !usize {
         var result: usize = 0;
 
         std.debug.print("\n{s}------------------------{s}", .{ common.red, common.clear });
@@ -58,10 +55,15 @@ const Pattern = struct {
         std.debug.print("\n", .{});
         // Rows
         var equal_count_rows: usize = 0;
+        var potential_rows = std.ArrayList([2]?usize).init(allocator);
+        _ = potential_rows;
         var reflection_rows: [2]?usize = [2]?usize{ null, null };
         outer: for(0..self.row_matrix.len - 1) |r| {
             var row_a = self.row_matrix[r];
             var row_b = self.row_matrix[r + 1];
+
+            try self.findSmudge(row_a, row_b);
+
             const equal = std.mem.eql(u8, row_a, row_b);
             if (equal) {
                 equal_count_rows += 1;
@@ -71,7 +73,7 @@ const Pattern = struct {
                 // see if they match up...
                 var others_equal = true;
                 validation: for (1..self.row_matrix.len) |r_b| {
-                    std.debug.print("\n[{d} {d}] --> {d} | {d}", .{ r, r + 1, r -| r_b, r + 1 + r_b });
+                    std.debug.print("\n[{d} {d}] --> {d} | {d}", .{ r + 1, r + 2, (r + 1) -| r_b, r + 2 + r_b });
                     if (r + r_b + 1 >= self.row_matrix.len or @as(i16, @intCast(r)) - @as(i16, @intCast(r_b)) < 0) {
                         break :validation;
                     }
@@ -79,6 +81,8 @@ const Pattern = struct {
                     row_b = self.row_matrix[r + 1 + r_b];
                     others_equal = others_equal and std.mem.eql(u8, row_a, row_b);
                     std.debug.print("\n{s} | {s} --> {any}", .{ row_a, row_b, others_equal });
+
+                    // try self.findSmudge(row_a, row_b);
                 }
                 // If any of the row pairs don't match, it's not a proper reflection!
                 if (!others_equal) {
@@ -108,14 +112,20 @@ const Pattern = struct {
         for(0..self.col_matrix.len) |c| {
             std.debug.print("\n{d: >2}  {s}  {d: >2}", .{ c + 1, self.col_matrix[c], c + 1 });
         }
+
         // Columns
-        // std.debug.print("\n{s}", .{ common.yellow });
+        std.debug.print("\n{s}", .{ common.yellow });
         var equal_count_cols: usize = 0;
+        var potential_cols = std.ArrayList([2]?usize).init(allocator);
+        _ = potential_cols;
         var reflection_cols: [2]?usize = [2]?usize{ null, null };
         outer: for(0..self.col_matrix.len - 1) |c| {
             // std.debug.print("\n[{d} {d}]", .{c, self.col_matrix.len - c});
             var col_a = self.col_matrix[c];
             var col_b = self.col_matrix[c + 1];
+
+            try self.findSmudge(col_a, col_b);
+
             const equal = std.mem.eql(u8, col_a, col_b);
             if (equal) {
                 equal_count_cols += 1;
@@ -133,6 +143,8 @@ const Pattern = struct {
                     col_b = self.col_matrix[c + 1 + c_b];
                     others_equal = others_equal and std.mem.eql(u8, col_a, col_b);
                     std.debug.print("\n{s} | {s} --> {any}", .{ col_a, col_b, others_equal });
+
+                    // try self.findSmudge(col_a, col_b);
                 }
                 // If any of the column pairs don't match, it's not a proper reflection!
                 if (!others_equal) {
@@ -150,12 +162,28 @@ const Pattern = struct {
             }
             std.debug.print("\n{s}[{d: >2}] {s}      {s}[{d: >2}] {s} ⟶ {any}", .{common.blue, c + 1, col_a, common.red, c + 2, col_b, equal });
         }
-        std.debug.print("\n{s}---- ??? Potential Reflection on col [{?}, {?}]", .{ common.clear, reflection_cols[0], reflection_cols[1] });
+        std.debug.print("\n{s}---- {s}? Potential Reflection on col [{?}, {?}]", .{ common.clear, common.yellow, reflection_cols[0], reflection_cols[1] });
         if (equal_count_cols == 1) {
-            std.debug.print("\n---- ✓ {s}Reflection on col [{?}, {?}]", .{ common.clear, reflection_cols[0], reflection_cols[1] });
+            std.debug.print("\n    {s}✓ {s}Reflection on col [{?}, {?}]{s}", .{ common.clear, common.green, reflection_cols[0], reflection_cols[1], common.clear });
             result += reflection_cols[0] orelse 0;
         }
+
         return result;
+    }
+
+    pub fn findSmudge(self: *Pattern, a: []const u8, b: []const u8) !void {
+        _ = self;
+        var diff_count: i16 = 0;
+        var diff_idx: ?usize = null;
+        for (a, b, 0..a.len) |c_a, c_b, i| {
+            var diff: i16 = @as(i16, @intCast(c_a)) - @as(i16, @intCast(c_b));
+            if (diff == -11 or diff == 11) diff_idx = i;
+            diff_count += diff;
+            std.debug.print("\n{c} - {c}: {d}", .{ c_a, c_b, diff });
+        }
+        if (try std.math.absInt(diff_count) == 11) {
+            std.debug.print("\n{s}!!!.... Potential smudge @ {any}{s}", .{ common.yellow, diff_idx, common.clear });
+        }
     }
 
     pub fn deinit(self: *Pattern, allocator: Allocator) void {
@@ -178,7 +206,6 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var current_pattern_data = std.ArrayList(u8).init(allocator);
     while(row_it.next()) |row| {
         if (row.len == 0) {
-            // @TODO next pattern
             var pattern = Pattern {};
             try pattern.init(allocator, current_pattern_data.items);
             try pattern_list.append(pattern);
@@ -192,7 +219,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var result: usize = 0;
     std.debug.print("\n{d} Pattern", .{ pattern_list.items.len });
     for(pattern_list.items) |*pattern| {
-        result += try pattern.findReflection();
+        result += try pattern.findReflection(allocator);
 
         // step: {
         //     const in = std.io.getStdIn();
@@ -211,13 +238,45 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    var row_it = std.mem.split(u8, input, "\n");
+    var pattern_list = std.ArrayList(Pattern).init(allocator);
+
+    var current_pattern_data = std.ArrayList(u8).init(allocator);
+    while(row_it.next()) |row| {
+        if (row.len == 0) {
+            var pattern = Pattern {};
+            try pattern.init(allocator, current_pattern_data.items);
+            try pattern_list.append(pattern);
+            current_pattern_data.clearAndFree();
+            continue;
+        }
+        try current_pattern_data.appendSlice(row);
+        try current_pattern_data.append('\n');
+    }
+
+    var result: usize = 0;
+    std.debug.print("\n{d} Pattern", .{ pattern_list.items.len });
+    for(pattern_list.items) |*pattern| {
+        result += try pattern.findReflection(allocator);
+
+        step: {
+            const in = std.io.getStdIn();
+            var buf = std.io.bufferedReader(in.reader());
+            var r = buf.reader();
+            std.debug.print("\n\nNext?... ", .{});
+            var msg_buf: [4096]u8 = undefined;
+            _ = try r.readUntilDelimiterOrEof(&msg_buf, '\n');
+            break :step;
+         }
+
+        defer pattern.deinit(allocator);
+    }
+    std.debug.print("\n\nResult: {d}", .{ result });
 }
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    try common.runDay(allocator, 13, .PUZZLE, part1, part2);
+    try common.runDay(allocator, 13, .EXAMPLE, part1, part2);
 }

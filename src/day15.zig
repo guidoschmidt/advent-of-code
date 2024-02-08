@@ -20,7 +20,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     while(steps_it.next()) |step| {
         if (step.len == 0) break;
         var value = hash(step);
-        std.debug.print("\n{s: >4} → {d: <3}", .{ step, value });
+        std.debug.print("\n{s: >8} → {d: <3}", .{ step, value });
         sum += value;
     }
     std.debug.print("\n\nResult: {d}\n", .{ sum });

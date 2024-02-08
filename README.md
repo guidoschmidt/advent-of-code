@@ -19,3 +19,4 @@
     Need to test the single bits and pieces more carefully
 - Day 18:
   - Part 1: terminal buffer was too small to draw the whole map, used [pgm file format](https://de.wikipedia.org/wiki/Portable_Anymap#Kopfdaten)
+  - Part 2: visualize using svg + calculate using [shoelace formula](https://en.wikipedia.org/wiki/Shoelace_formula)
