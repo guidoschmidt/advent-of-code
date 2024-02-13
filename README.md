@@ -20,3 +20,9 @@
 - Day 18:
   - Part 1: terminal buffer was too small to draw the whole map, used [pgm file format](https://de.wikipedia.org/wiki/Portable_Anymap#Kopfdaten)
   - Part 2: visualize using svg + calculate using [shoelace formula](https://en.wikipedia.org/wiki/Shoelace_formula)
+- Day 19:
+  - Part 1: should have been easy, but I suffered from a parsing bug to only
+    parse '<' values (annoying)
+- Day 23:
+  - Part 1: relatively easy, just go through all teh possible routes and count
+    the steps, then look for the one with the largest step count
