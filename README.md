@@ -26,3 +26,8 @@
 - Day 23:
   - Part 1: relatively easy, just go through all teh possible routes and count
     the steps, then look for the one with the largest step count
+- Day 24:
+  - Part 1: straight forward, but understanding how to find if an intersection is in
+    the past wasn't quite intuitive. If you think about it it's rather easy,
+    just subtract the intersection point from the hailstones positiond and
+    compare it's sign with the hailstones velocity.
