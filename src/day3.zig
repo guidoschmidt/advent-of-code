@@ -46,7 +46,7 @@ fn indexWithOffset(x: i16, y: i16, col_count: i16, x_o: i16, y_o: i16, data_len:
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var clean_input = allocator.alloc(u8, input.len) catch input; 
+    const clean_input = allocator.alloc(u8, input.len) catch input; 
     _ = std.mem.replace(u8, input, "\n", "", @constCast(clean_input));
 
     var row_it = std.mem.tokenize(u8, input, "\n");

@@ -12,30 +12,37 @@ pub fn getPuzzleInputFromServer(allocator: std.mem.Allocator, day: u8, file_path
     var buf: [128]u8 = undefined;
     const new_file = try fs.cwd().createFile(file_path, .{});
     const url = try std.fmt.bufPrint(&buf, "https://adventofcode.com/2023/day/{d}/input", .{ day });
-    var headers = http.Headers{ .allocator = allocator };
+    // var headers = http.Headers{ .allocator = allocator };
     const cookie_from_env = try getAdventOfCodeCookieFromEnv(allocator);
     if (cookie_from_env == null) {
         std.log.err("\nPlease set AOC_COOKIE env variable", .{});
         return "";
     }
     std.debug.print("\nAOC_COOKIE: {s}", .{ cookie_from_env.? });
-    try headers.append("Cookie", cookie_from_env.?);
-    defer headers.deinit();
+    // try headers.append("Cookie", cookie_from_env.?);
+    // defer headers.deinit();
 
     var client = http.Client{ .allocator = allocator };
     defer client.deinit();
 
-    const uri = try std.Uri.parse(url);
-    var req = try client.request(.GET, uri, headers, .{});
-    defer req.deinit();
+    var body = std.ArrayList(u8).init(allocator);
+    defer body.deinit();
 
-    try req.start();
-    try req.wait();
+    const req = try client.fetch(.{
+        .location = .{ .url = url },
+        .extra_headers = &.{
+            .{ .name = "Cookie", .value = cookie_from_env.? }
+        },
+        .response_storage = .{
+            .dynamic = &body,
+        }
+    });
+    if (req.status == .ok) {
+        std.debug.print("\nSuccess", .{});
+    }
 
-    var rdr = req.reader();
-    const body = try rdr.readAllAlloc(allocator, 4096 * 10);
-    try new_file.writeAll(body);
-    return body;
+    try new_file.writeAll(body.items);
+    return body.items;
 }
 
 pub fn getPuzzleInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
@@ -51,9 +58,9 @@ pub fn getPuzzleInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
     return try file.readToEndAlloc(allocator, stat.size);
 }
 
-pub fn getPuzzleTestInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
+pub fn getExampleInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
     var buf: [128]u8 = undefined;
-    const file_path = try std.fmt.bufPrint(&buf, "src/data/day{d}-test.txt", .{ day });
+    const file_path = try std.fmt.bufPrint(&buf, "src/data/day{d}-example.txt", .{ day });
     const file = try fs.cwd().openFile(file_path, .{});
     const stat = try file.stat();
     return try file.readToEndAlloc(allocator, stat.size);

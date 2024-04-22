@@ -30,7 +30,7 @@ pub const PuzzleInput = enum { EXAMPLE, PUZZLE };
 pub fn runPart(allocator: std.mem.Allocator, day: u8, input_type: PuzzleInput, comptime part_fn: fn (allocator: Allocator, input: []const u8) anyerror!void) !void {
     const input = switch (input_type) {
         .PUZZLE => try puzzle_input.getPuzzleInput(allocator, day),
-        .EXAMPLE => try puzzle_input.getPuzzleTestInput(allocator, day),
+        .EXAMPLE => try puzzle_input.getExampleInput(allocator, day),
     };
     stopwatch.start();
     try part_fn(allocator, input);
@@ -41,7 +41,7 @@ pub fn runPart(allocator: std.mem.Allocator, day: u8, input_type: PuzzleInput, c
 pub fn runDay(allocator: std.mem.Allocator, day: u8, input_type: PuzzleInput, comptime part1: fn (allocator: Allocator, input: []const u8) anyerror!void, comptime part2: fn (allocator: Allocator, input: []const u8) anyerror!void) !void {
     const input = switch (input_type) {
         .PUZZLE => try puzzle_input.getPuzzleInput(allocator, day),
-        .EXAMPLE => try puzzle_input.getPuzzleTestInput(allocator, day),
+        .EXAMPLE => try puzzle_input.getExampleInput(allocator, day),
     };
 
     printPart1();

@@ -4,12 +4,13 @@ const common = @import("common.zig");
 const Allocator = std.mem.Allocator;
 
 const Route = struct {
+    map: [][]u8 = undefined,
     steps: u32 = 0,
     pos_x: i16,
     pos_y: i16,
     prev_pos_x: i16,
     prev_pos_y: i16,
-    route_id: u16,
+    route_id: u32,
 
     pub fn findNext_part1(self: *Route, gpa: Allocator, map: *[][]u8) !std.ArrayList(Route) {
         var split_routes = std.ArrayList(Route).init(gpa);
@@ -89,11 +90,15 @@ const Route = struct {
         return split_routes;
     }
 
-    pub fn findNext_part2(self: *Route, gpa: Allocator, map: *[][]u8, history_map: *[][]u16) !std.ArrayList(Route) {
-        history_map.*[@intCast(self.pos_y)][@intCast(self.pos_x)] = 1;
+    pub fn findNext_part2(self: *Route, gpa: Allocator, map: *[][]u8, viz_map: *[][]u8) !std.ArrayList(Route) {
         var split_routes = std.ArrayList(Route).init(gpa);
+        self.map[@intCast(self.pos_y)][@intCast(self.pos_x)] = 'X';
+        viz_map.*[@intCast(self.pos_y)][@intCast(self.pos_x)] = 'X';
+        printCharMap(&self.map);
+        common.blockAskForNext();
         const x_o = [4]i2{  0,  0, -1,  1 };
         const y_o = [4]i2{ -1,  1,  0,  0 };
+        var found_routes: usize = 0;
         for(0..4) |i| {
             const ox = x_o[i];
             const oy = y_o[i];
@@ -101,18 +106,26 @@ const Route = struct {
             const _x = @max(self.pos_x + @as(i16, @intCast(ox)), 0);
             if (_y == self.pos_y and _x == self.pos_x) continue;
             if (_y == self.prev_pos_y and _x == self.prev_pos_x) continue;
-            if (history_map.*[@intCast(_y)][@intCast(_x)] > 0) continue;
             const map_val = map.*[@intCast(_y)][@intCast(_x)];
             switch (map_val) {
-                '.', '<', '>', 'v', '^' => {
+                '.', 'v', '^', '<', '>' => {
+                    if (self.map[@intCast(_y)][@intCast(_x)] == 'X') continue;
+                    const map_dup = try gpa.dupe([]u8, self.map);
+                    for (0..map_dup.len) |x| {
+                        for (0..map_dup[x].len) |y| {
+                            map_dup[x][y] = self.map[x][y];
+                        }
+                    }
                     try split_routes.append(Route {
                         .steps = self.steps + 1,
                         .pos_x = _x,
                         .pos_y = _y,
                         .prev_pos_x = self.pos_x,
                         .prev_pos_y = self.pos_y,
-                        .route_id = self.route_id + @as(u16, @intCast(split_routes.items.len)),
+                        .route_id = self.route_id + @as(u32, @intCast(found_routes)),
+                        .map = map_dup,
                     });
+                    found_routes += 1;
                 },
                 else => {}
             }
@@ -121,7 +134,7 @@ const Route = struct {
     }
 };
 
-fn printMap(map: *[][]u8) void {
+fn printCharMap(map: *[][]u8) void {
     std.debug.print("\n", .{});
     for (0..map.len) |x| {
         const row = map.*[x];
@@ -129,12 +142,25 @@ fn printMap(map: *[][]u8) void {
         for(0..row.len) |y| {
             const v = map.*[y][x];
             switch(v) {
-                'X' => {
-                    std.debug.print("{s}{d}{s}", .{ common.red, v , common.clear });
-                },
-                else => {
-                    std.debug.print("{d}", .{ v });
-                }
+                'X' => std.debug.print("{s}{c}{s}", .{ common.red, v , common.clear }),
+                else => std.debug.print("{c}", .{ v }),
+            }
+        }
+    }
+}
+
+fn printMap(map: *[][]u16) void {
+    std.debug.print("\n", .{});
+    for (0..map.len) |x| {
+        const row = map.*[x];
+        std.debug.print("\n", .{});
+        for(0..row.len) |y| {
+            const v = map.*[y][x];
+            if (v > 1) {
+                std.debug.print("{s}{d}{s}", .{ common.red, v , common.clear });
+            }
+            else{
+                std.debug.print("{d}", .{ v });
             }
         }
     }
@@ -203,6 +229,8 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
         }
     }
 
+    std.debug.print("\nFound {d} routes", .{ finished_routes.items.len });
+
     var longest_route: u32 = 0;
     for(finished_routes.items) |finished_route| {
         if (finished_route.steps > longest_route)
@@ -259,6 +287,7 @@ fn part2(gpa: Allocator, input: []const u8) anyerror!void {
         .prev_pos_y = 0,
         .steps = 0,
         .route_id = 1,
+        .map = try gpa.dupe([]u8, viz_map),
     });
     std.debug.print("\nGoal [{d} x {d}]", .{ goal_x, height });
     var finished_routes = std.ArrayList(Route).init(gpa);
@@ -266,16 +295,22 @@ fn part2(gpa: Allocator, input: []const u8) anyerror!void {
         var next_route = routes.pop();
         viz_map[@intCast(next_route.pos_y)][@intCast(next_route.pos_x)] = 'X';
         // printMap(&history_map);
+        // printCharMap(&viz_map);
         // common.blockAskForNext();
         if (next_route.pos_x > goal_x) {
             try finished_routes.append(next_route);
             continue;
         }
-        var split_routes = try next_route.findNext_part2(gpa, &map, &history_map);
+        const split_routes = try next_route.findNext_part2(gpa, &map, &viz_map);
         for (split_routes.items) |route| {
             try routes.append(route);
         }
     }
+
+    // printMap(&history_map);
+    printCharMap(&viz_map);
+
+    std.debug.print("\nFound {d} routes", .{ finished_routes.items.len });
 
     var longest_route: u32 = 0;
     for(finished_routes.items) |finished_route| {
@@ -289,6 +324,6 @@ pub fn main() !void {
     var gpa_generator = std.heap.GeneralPurposeAllocator(.{}){};
     const gpa = gpa_generator.allocator();
 
-    try common.runPart(gpa, 23, .PUZZLE, part1);
-    try common.runPart(gpa, 23, .PUZZLE, part2);
+    // try common.runPart(gpa, 23, .PUZZLE, part1);
+    try common.runPart(gpa, 23, .EXAMPLE, part2);
 }
