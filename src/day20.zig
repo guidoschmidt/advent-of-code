@@ -1,5 +1,6 @@
 const std = @import("std");
 const common = @import("common.zig");
+const math = @import("./math.zig");
 
 const Allocator = std.mem.Allocator;
 
@@ -64,6 +65,7 @@ const Node = struct {
     inputs: std.ArrayList(*Node),
     outputs: std.ArrayList(*Node),
     module: NodeModule,
+    state: ?Pulse = undefined,
 
     pub fn format(self: Node, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
@@ -114,7 +116,7 @@ const Node = struct {
             .CONJUNCTION => self.processConjunction(in, from_input),
             .OTHER       => null,
         };
-
+        self.state = out;
         if (out != null) {
             for(self.outputs.items) |output| {
                 try transfers.append(Transfer{
@@ -158,21 +160,18 @@ const Node = struct {
                 high_pulse_count += 1;
         }
         const send_pulse: Pulse = if (high_pulse_count == self.module.CONJUNCTION.count())
-            .LOW  else .HIGH;
+            .LOW else .HIGH;
 
         return send_pulse;
     }
 };
 
-const Graph = struct {
-    modules: std.StringHashMap(Node),
-};
-
 const SystemState = struct {
     allocator: Allocator = undefined,
     module_dict: std.StringHashMap(Node) = undefined,
-    low_pulses_sent: u32 = 0,
-    high_pulses_sent: u32 = 0,
+    low_pulses_sent: u64 = 0,
+    high_pulses_sent: u64 = 0,
+    final_output_modules: ?std.ArrayList(u64),
 
     pub fn format(self: SystemState,
                   comptime fmt: []const u8,
@@ -190,17 +189,19 @@ const SystemState = struct {
         }
     }
 
-    pub fn pressButton(self: *SystemState) !void {
+    pub fn pressButton(self: *SystemState, i: usize) !bool {
         var broadcaster = self.module_dict.get("broadcaster").?;
-        std.debug.print("\nbutton -L-> broadcaster", .{});
 
-        var transfers = std.ArrayList(Transfer).init(self.allocator);
-        try transfers.append(Transfer {
+        const start = Transfer {
             .from = "button",
             .to = &broadcaster,
             .pulse = .LOW,
-        });
+        };
 
+        var transfers = std.ArrayList(Transfer).init(self.allocator);
+        try transfers.append(start);
+
+        const low_pulse_to_rx = false;
         while (transfers.items.len > 0) {
             const next = transfers.orderedRemove(0);
 
@@ -209,18 +210,46 @@ const SystemState = struct {
                 .HIGH => self.high_pulses_sent += 1,
             }
 
-            std.debug.print("\n{s} -{any}-> {s}", .{ next.from, next.pulse, next.to.name });
+            // zl, xf, xn, qn
+            const is_zl = std.mem.eql(u8, next.from, "zl");
+            const is_xf = std.mem.eql(u8, next.from, "xf");
+            const is_xn = std.mem.eql(u8, next.from, "xn");
+            const is_qn = std.mem.eql(u8, next.from, "qn");
+            if (is_zl and next.pulse == .HIGH) {
+                std.debug.print("\nHIGH to {s}: {d}", .{ next.from, i });
+                try self.final_output_modules.?.append(i + 1);
+                common.blockAskForNext();
+            }
+            if (is_xf and next.pulse == .HIGH) {
+                std.debug.print("\nHIGH to {s}: {d}", .{ next.from, i });
+                try self.final_output_modules.?.append(i + 1);
+                common.blockAskForNext();
+            }
+            if (is_xn and next.pulse == .HIGH) {
+                std.debug.print("\nHIGH to {s}: {d}", .{ next.from, i });
+                try self.final_output_modules.?.append(i + 1);
+                common.blockAskForNext();
+            }
+            if (is_qn and next.pulse == .HIGH) {
+                std.debug.print("\nHIGH to {s}: {d}", .{ next.from, i });
+                try self.final_output_modules.?.append(i + 1);
+                common.blockAskForNext();
+            }
+
+            if (self.final_output_modules != null and self.final_output_modules.?.items.len == 4) return true;
+
+            // std.debug.print("\n{s} -{any}-> {s}", .{ next.from, next.pulse, next.to.name });
             try next.to.process(next.pulse, next.from, &transfers);
         }
+
+        return low_pulse_to_rx;
     }
 };
 
-fn part1(allocator: Allocator, input: []const u8) anyerror!void {
+fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) {
     var row_it = std.mem.tokenize(u8, input, "\n");
 
-    // var module_list = std.ArrayList(Node).init(allocator);
     var module_dict = std.StringHashMap(Node).init(allocator);
-    defer module_dict.deinit();
 
     var module_links = std.StringHashMap(std.ArrayList([]const u8)).init(allocator);
     defer module_links.deinit();
@@ -322,24 +351,48 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
             }
         }
     }
+    return module_dict;
+}
 
+fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var system = SystemState {
         .allocator = allocator,
-        .module_dict = module_dict,
+        .module_dict = try parseInput(allocator, input),
     };
     std.debug.print("\n{any}", .{ system });
 
     for (0..1000) |i| {
         std.debug.print("\n\n###### Button Press {d}", .{ i });
-        try system.pressButton();
+        _ = try system.pressButton();
     }
     std.debug.print("\n{any}", .{ system });
     std.debug.print("\n\nResult: {d}", .{ system.high_pulses_sent * system.low_pulses_sent });
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = input;
-    _ = allocator;
+    var system = SystemState {
+        .allocator = allocator,
+        .module_dict = try parseInput(allocator, input),
+        .final_output_modules = std.ArrayList(u64).init(allocator),
+    };
+
+    if (system.module_dict.get("rx")) |rx_module| {
+        std.debug.print("\n{any}:", .{ rx_module });
+        if (system.module_dict.get("th")) |th_module| {
+            for (th_module.inputs.items) |th_input| {
+                std.debug.print("\n   → {s} [{any}]", .{ th_input.name, th_input.module });
+            }
+        }
+    }
+
+    var i: usize = 0;
+    while (true) : (i += 1) {
+        std.debug.print("\n\n###### Button Press {d}", .{ i });
+        if (try system.pressButton(i)) break;
+    }
+    const solution = math.lcm(u64, system.final_output_modules.?.items);
+    std.debug.print("\n{any}", .{ system });
+    std.debug.print("\n\nResult: {d}", .{ solution });
 }
 
 pub fn main() !void {
@@ -347,5 +400,6 @@ pub fn main() !void {
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    try common.runPart(arena_alloc, 20, .PUZZLE, part1);
+    //try common.runPart(arena_alloc, 20, .PUZZLE, part1);
+    try common.runPart(arena_alloc, 20, .PUZZLE, part2);
 }

@@ -1,5 +1,6 @@
 const std = @import("std");
 const common = @import("./common.zig");
+const math = @import("./math.zig");
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 const allocator = gpa.allocator();
@@ -131,22 +132,8 @@ fn part2(input: []const u8) void {
         std.debug.print("\n[{s}] {d}", .{ walker.pos, walker.counter });
         counters[i] = walker.counter;
     }
-    const result = lcm(u64, counters);
+    const result = math.lcm(u64, counters);
     std.debug.print("\n{d}", .{ result });
-}
-
-fn lcm(comptime T: type, nums: []const T) T {
-    var r: T = nums[0];
-    for(1..nums.len) |i| {
-        r = nums[i] * r / gcd(T, nums[i], r);
-    }
-    return r;
-}
-
-fn gcd(comptime T: type, a: T, b: T) T {
-    if (b == 0)
-        return a;
-    return gcd(T, b, @mod(a, b));
 }
 
 fn walk(walker: *Walker, node_map: *std.StringHashMap(LR), lr_instructions: *std.ArrayList(u8)) void {
