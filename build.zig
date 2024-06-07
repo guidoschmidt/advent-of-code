@@ -9,7 +9,7 @@ fn createBuildTarget(b: *std.Build, day: u8) void {
                                          "src/day{d}.zig", .{ day }) catch "src/day1.zig";
     const exe = b.addExecutable(.{
         .name = "advent-of-code",
-        .root_source_file = .{ .path = source_file },
+        .root_source_file =  b.path(source_file),
         .target = target,
         .optimize = optimize,
     });
@@ -23,7 +23,7 @@ fn createBuildTarget(b: *std.Build, day: u8) void {
 
     // Testing
     const unit_tests = b.addTest(.{
-        .root_source_file = .{ .path = source_file },
+        .root_source_file = b.path(source_file),
         .target = target,
         .optimize = optimize,
     });
