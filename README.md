@@ -1,5 +1,5 @@
 # Advent Of Code
-### Solutions with [zig](https://ziglang.org/)
+###### [zig](https://ziglang.org/) solutions
 
 1. Install [zig 0.13.0](https://ziglang.org/), preferably using
    [zvm](https://github.com/tristanisham/zvm)
