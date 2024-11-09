@@ -19,7 +19,7 @@ const History = struct {
             diffs.append(diff) catch unreachable;
             all_zeros = all_zeros and diff == 0;
         }
-        std.debug.print("\n{any}", .{ diffs.items });
+        // std.debug.print("\n{any}", .{ diffs.items });
         if (all_zeros) {
             return self.last(diffs);
         }
@@ -34,7 +34,7 @@ const History = struct {
             diffs.append(diff) catch unreachable;
             all_zeros = all_zeros and diff == 0;
         }
-        std.debug.print("\n{any}", .{ diffs.items });
+        // std.debug.print("\n{any}", .{ diffs.items });
         if (all_zeros) {
             return diffs.items[0];
         }
@@ -74,13 +74,13 @@ fn parseSequences(allocator: Allocator, input: []const u8, list: *std.ArrayList(
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var seq_list = std.ArrayList(History).init(allocator);
     parseSequences(allocator, input, &seq_list);
-    std.debug.print("\n# Sequeces: {d}", .{ seq_list.items.len });
+    // std.debug.print("\n# Sequeces: {d}", .{ seq_list.items.len });
 
     var sum: i32 = 0;
     for(0..seq_list.items.len) |i| {
-        std.debug.print("\n\n{any}", .{ seq_list.items[i].data.items });
+        // std.debug.print("\n\n{any}", .{ seq_list.items[i].data.items });
         const next = seq_list.items[i].find_next(allocator);
-        std.debug.print("\n→ {d}", .{ next });
+        // std.debug.print("\n→ {d}", .{ next });
         sum += next;
     }
     std.debug.print("\n\nResult:\n{d}", .{ sum });
@@ -89,13 +89,13 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var seq_list = std.ArrayList(History).init(allocator);
     parseSequences(allocator, input, &seq_list);
-    std.debug.print("\n# Sequeces: {d}", .{ seq_list.items.len });
+    // std.debug.print("\n# Sequeces: {d}", .{ seq_list.items.len });
 
     var sum: i32 = 0;
     for(0..seq_list.items.len) |i| {
-        std.debug.print("\n\n{any}", .{ seq_list.items[i].data.items });
+        // std.debug.print("\n\n{any}", .{ seq_list.items[i].data.items });
         const next = seq_list.items[i].find_prev(allocator);
-        std.debug.print("\n→ {d}", .{ next });
+        // std.debug.print("\n→ {d}", .{ next });
         sum += next;
     }
     std.debug.print("\n\nResult:\n{d}", .{ sum });

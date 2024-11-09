@@ -233,6 +233,31 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     };
 
     var parts_it = std.mem.tokenize(u8, input, "\n");
+
+    // Seeds
+    const seeds_part = parts_it.next().?;
+    var split = std.mem.split(u8, seeds_part, "seeds:");
+    _ = split.next();
+    var row_it = std.mem.tokenize(u8, split.next().?, " ");
+    while (row_it.next()) |v| {
+        std.debug.print("\n{any}", .{ v });
+        const number = std.fmt.parseInt(u64, v, 10) catch {
+            continue;
+        };
+        try seeds_list.append(number);
+    }
+    row_it.reset();
+    while(row_it.next()) |v| {
+        const start = std.fmt.parseInt(u64, v, 10) catch {
+            continue;
+        };
+        const length = std.fmt.parseInt(u64, row_it.next().?, 10) catch {
+            continue;
+        };
+        try seed_range_list.append(Range{ .start = start, .end = start + length, .length = length });
+    }
+
+    // Maps
     var current_map: []const u8 = "";
     while (parts_it.next()) |part| {
         if (std.mem.containsAtLeast(u8, part, 1, ":")) {
@@ -241,27 +266,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
             continue;
         }
 
-        var row_it = std.mem.tokenize(u8, part, " ");
-
-        // Seeds
-        if (std.mem.eql(u8, current_map, "seeds:")) {
-            while (row_it.next()) |v| {
-                const start = std.fmt.parseInt(u64, v, 10) catch {
-                    continue;
-                };
-                try seeds_list.append(start);
-            }
-            row_it.reset();
-            while(row_it.next()) |v| {
-                const start = std.fmt.parseInt(u64, v, 10) catch {
-                    continue;
-                };
-                const length = std.fmt.parseInt(u64, row_it.next().?, 10) catch {
-                    continue;
-                };
-                try seed_range_list.append(Range{ .start = start, .end = start + length, .length = length });
-            }
-        }
+        row_it = std.mem.tokenize(u8, part, " ");
 
         // Seed → Soil
         if (std.mem.eql(u8, current_map, "seed-to-soil map:")) {

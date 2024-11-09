@@ -287,7 +287,7 @@ fn follow(step: u32, pos: *[2]Pos, directions: []Dir, cols: u32, rows: u32, inpu
         next_step+=1;
     }
 
-    std.debug.print("\n\nResult{}\n", .{ next_step });
+    std.debug.print("\n\nResult: {}\n", .{ next_step });
 }
 
 fn findNextDir(current_pos: Pos, cols: u32, rows: u32, pipe_map: []const u8) ?Dir {
@@ -415,7 +415,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
     dist_map = allocator.alloc(i32, col_count * row_count) catch unreachable;
     var pipe_map = allocator.alloc(u8, col_count * row_count) catch unreachable;
-    var input_map = allocator.alloc(u8, col_count * row_count) catch unreachable;
+    const input_map = allocator.alloc(u8, col_count * row_count) catch unreachable;
 
     std.debug.print("\nMap size {d} x {d}", .{ row_count, col_count });
 
@@ -426,9 +426,9 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var start_positions = [2]Pos{ start, start };
     follow(step + 1, &start_positions, start_directions.items, col_count, row_count, input_map, &pipe_map);
 
-    printMap("INPUT MAP", &input_map, row_count, col_count, printDefaultTile);
-    printMap("PIPE MAP", &pipe_map, row_count, col_count, printArrowTile);
-    printDistMap(&dist_map, row_count, col_count);
+    // printMap("INPUT MAP", &input_map, row_count, col_count, printDefaultTile);
+    // printMap("PIPE MAP", &pipe_map, row_count, col_count, printArrowTile);
+    // printDistMap(&dist_map, row_count, col_count);
 }
 
 fn floodFill(allocator: Allocator, candidates: *std.ArrayList(Pos), pipe_map: []u8, map_number: u8, map_char: u8) void {
@@ -463,7 +463,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     dist_map = allocator.alloc(i32, col_count * row_count) catch unreachable;
     var pipe_map = allocator.alloc(u8, col_count * row_count) catch unreachable;
-    var input_map = allocator.alloc(u8, col_count * row_count) catch unreachable;
+    const input_map = allocator.alloc(u8, col_count * row_count) catch unreachable;
 
     std.debug.print("\nMap size {d} x {d}", .{ row_count, col_count });
 
@@ -479,9 +479,9 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     floodFill(allocator, &outside_candidates, pipe_map, 7, INSIDE);
     floodFill(allocator, &inside_candidates, pipe_map, 8, OUTSIDE);
 
-    printMap("INPUT MAP", &input_map, row_count, col_count, printDefaultTile);
-    printMap("PIPE MAP", &pipe_map, row_count, col_count, printArrowTile);
-    printDistMap(&dist_map, row_count, col_count);
+    // printMap("INPUT MAP", &input_map, row_count, col_count, printDefaultTile);
+    // printMap("PIPE MAP", &pipe_map, row_count, col_count, printArrowTile);
+    // printDistMap(&dist_map, row_count, col_count);
 
     var missing_candidates = std.ArrayList(Pos).init(allocator);
     for(0..row_count) |y| {
@@ -499,8 +499,8 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
             count_inside += 1;
     }
 
-    printMap("\nPIPE MAP", &pipe_map, row_count, col_count, printArrowTile);
-    std.debug.print("\nResult: {d} + {d}", .{ count_inside, missing_candidates.items.len });
+    // printMap("\nPIPE MAP", &pipe_map, row_count, col_count, printArrowTile);
+    std.debug.print("\nResult: {d} + {d} = {d}", .{ count_inside, missing_candidates.items.len, count_inside + missing_candidates.items.len });
 }
 
 pub fn main() !void {
