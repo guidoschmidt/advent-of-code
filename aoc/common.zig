@@ -30,22 +30,8 @@ pub fn runPart(allocator: std.mem.Allocator, year: u16, day: u8, input_type: Puz
 }
 
 pub fn runDay(allocator: std.mem.Allocator, year: u16, day: u8, input_type: PuzzleInput, comptime part1: fn (allocator: Allocator, input: []const u8) anyerror!void, comptime part2: fn (allocator: Allocator, input: []const u8) anyerror!void) !void {
-    const input = switch (input_type) {
-        .PUZZLE => try puzzle_input.getPuzzleInput(allocator, day, year),
-        .EXAMPLE => try puzzle_input.getExampleInput(allocator, day, year),
-    };
-
-    printPart1();
-    stopwatch.start();
-    try part1(allocator, input);
-    const time_part1 = stopwatch.stop();
-    printTime(time_part1);
-
-    printPart2();
-    stopwatch.start();
-    try part2(allocator, input);
-    const time_part2 = stopwatch.stop();
-    printTime(time_part2);
+    try runPart(allocator, year, day, input_type, part1);
+    try runPart(allocator, year, day, input_type, part2);
 }
 
 pub fn blockAskForNext() void {
