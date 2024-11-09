@@ -321,6 +321,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, 2023, 25, .EXAMPLE, part1);
+    try aoc.runPart(allocator, 2023, 25, .PUZZLE, part1);
     try aoc.runPart(allocator, 2023, 25, .EXAMPLE, part2);
 }

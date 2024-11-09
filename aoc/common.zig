@@ -1,5 +1,5 @@
 const std = @import("std");
-const puzzle_input = @import("./puzzle_input.zig");
+const puzzle_input = @import("./input.zig");
 const stopwatch = @import("./stopwatch.zig");
 
 const Allocator = std.mem.Allocator;
