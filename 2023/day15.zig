@@ -17,13 +17,13 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     const cleaned_input = try std.mem.replaceOwned(u8, allocator, input, "\n", "");
     var steps_it = std.mem.tokenize(u8, cleaned_input, ",");
     var sum: u32 = 0;
-    while(steps_it.next()) |step| {
+    while (steps_it.next()) |step| {
         if (step.len == 0) break;
         const value = hash(step);
-        std.debug.print("\n{s: >8} → {d: <3}", .{ step, value });
+        // std.debug.print("\n{s: >8} → {d: <3}", .{ step, value });
         sum += value;
     }
-    std.debug.print("\n\nResult: {d}\n", .{ sum });
+    std.debug.print("\n\nResult: {d}\n", .{sum});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
