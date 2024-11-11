@@ -15,8 +15,8 @@ const Allocator = std.mem.Allocator;
 
 fn visualizeCache(cache: *[][]usize) void {
     std.debug.print("\nCACHE:\n[", .{});
-    for(0..cache.len) |i| {
-        std.debug.print("{any}.", .{ cache.*[i] });
+    for (0..cache.len) |i| {
+        std.debug.print("{any}.", .{cache.*[i]});
     }
     std.debug.print("]\n", .{});
 }
@@ -25,11 +25,10 @@ fn countCombinationsMemoizedNew(allocator: Allocator, springs: []const u8, group
     // std.debug.print("\n-----------------------\nSprings , Groups:\n{s} , {any}\n\n", .{ springs, groups });
     var cache = try allocator.alloc([]usize, springs.len + 1);
 
-
     // Initialize the cache
-    for(0..springs.len + 1) |i| {
+    for (0..springs.len + 1) |i| {
         cache[i] = try allocator.alloc(usize, groups.len + 1);
-        for(0..groups.len + 1) |j| {
+        for (0..groups.len + 1) |j| {
             cache[i][j] = 0;
         }
     }
@@ -103,13 +102,13 @@ fn countCombinationsMemoizedNew(allocator: Allocator, springs: []const u8, group
     return cache[springs.len][groups.len];
 }
 
-pub fn unfold(allocator: Allocator, springs: []const u8, groups: []const usize) !struct{springs: []const u8, groups: []const usize} {
+pub fn unfold(allocator: Allocator, springs: []const u8, groups: []const usize) !struct { springs: []const u8, groups: []const usize } {
     var unfolded_springs = try allocator.alloc(u8, ((springs.len + 1) * 5) - 1);
 
     var start: usize = 0;
-    for(0..5) |_| {
+    for (0..5) |_| {
         const end = start + springs.len + 1;
-        for (unfolded_springs[start..end - 1], springs) |*d, s| {
+        for (unfolded_springs[start .. end - 1], springs) |*d, s| {
             d.* = s;
         }
         if (end < unfolded_springs.len)
@@ -148,23 +147,22 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
     var sum: u128 = 0;
 
-    while(row_it.next()) |row| {
+    while (row_it.next()) |row| {
         var entry_it = std.mem.split(u8, row, " ");
         const springs = entry_it.next().?;
 
         const groups_str = entry_it.next().?;
         var groups_it = std.mem.tokenize(u8, groups_str, ",");
-        var groups_list  = std.ArrayList(usize).init(allocator);
+        var groups_list = std.ArrayList(usize).init(allocator);
         var i: usize = 0;
-        while(groups_it.next()) |g| : (i += 1) {
+        while (groups_it.next()) |g| : (i += 1) {
             const n = try std.fmt.parseInt(usize, g, 10);
             try groups_list.append(n);
         }
         const groups = groups_list.items;
         sum += try countCombinationsMemoizedNew(allocator, springs, groups);
     }
-
-    std.debug.print("\n\nResult: {d}\n", .{ sum });
+    std.debug.print("\n\nResult: {d}\n", .{sum});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
@@ -172,33 +170,33 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     var sum: usize = 0;
 
-    while(row_it.next()) |row| {
+    while (row_it.next()) |row| {
         var entry_it = std.mem.split(u8, row, " ");
         const springs = entry_it.next().?;
 
         const groups_str = entry_it.next().?;
         var groups_it = std.mem.tokenize(u8, groups_str, ",");
-        var groups_list  = std.ArrayList(usize).init(allocator);
+        var groups_list = std.ArrayList(usize).init(allocator);
         var i: usize = 0;
-        while(groups_it.next()) |g| : (i += 1) {
+        while (groups_it.next()) |g| : (i += 1) {
             const n = try std.fmt.parseInt(usize, g, 10);
             try groups_list.append(n);
         }
 
-        std.debug.print("\n{s} -- {any}", .{ springs, groups_list.items });
+        // std.debug.print("\n{s} -- {any}", .{ springs, groups_list.items });
         const unfolded = try unfold(allocator, springs, groups_list.items);
         defer {
             allocator.free(unfolded.springs);
             allocator.free(unfolded.groups);
             groups_list.deinit();
         }
-        
+
         const result = try countCombinationsMemoizedNew(allocator, unfolded.springs, unfolded.groups);
-        std.debug.print("\n\x1B[32m→ Possibilities {d}\x1B[0m", .{ result });
+        // std.debug.print("\n\x1B[32m→ Possibilities {d}\x1B[0m", .{result});
         sum += result;
     }
 
-    std.debug.print("\n\nResult: {d}\n", .{ sum });
+    std.debug.print("\n\nResult: {d}\n", .{sum});
 }
 
 pub fn main() !void {
@@ -214,49 +212,49 @@ test "simple cases" {
 
     // Single chars
     var springs: []const u8 = "?";
-    var groups = &[_]usize{ 1 };
+    var groups = &[_]usize{1};
     var result: usize = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 1);
 
     springs = ".";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 0);
 
     springs = "#";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 1);
 
     // Two characters
     springs = "??";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 2);
 
     springs = "..";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 0);
 
     springs = "##";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 0);
 
     // Three characters
     springs = "???";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 3);
 
     springs = "...";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 0);
 
     springs = "###";
-    groups = &[_]usize{ 1 };
+    groups = &[_]usize{1};
     result = try countCombinationsMemoizedNew(allocator, springs, groups);
     try std.testing.expectEqual(result, 0);
 }
