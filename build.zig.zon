@@ -1,9 +1,6 @@
 .{
     .name = "advent-of-code",
-    .version = "0.0.0",
-    .dependencies = .{
-    },
-    .paths = .{
-        ""
-    },
+    .version = "0.0.1",
+    .dependencies = .{},
+    .paths = .{"./aoc"},
 }
