@@ -93,7 +93,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         }
     }
 
-    printMap(&map);
+    // printMap(&map);
 
     for (0..map.len) |x| {
         const row = map[x];
@@ -106,7 +106,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         }
     }
 
-    printMap(&map);
+    // printMap(&map);
 
     const load = sumLoad(&map);
     std.debug.print("\nResult: {d}", .{load});
@@ -121,6 +121,6 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    try aoc.runPart(allocator, 2023, 14, .EXAMPLE, part1);
-    try aoc.runPart(allocator, 2023, 14, .EXAMPLE, part2);
+    try aoc.runPart(allocator, 2023, 14, .PUZZLE, part1);
+    try aoc.runPart(allocator, 2023, 14, .PUZZLE, part2);
 }
