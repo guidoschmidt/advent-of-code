@@ -11,6 +11,6 @@ pub fn start() void {
 }
 
 pub fn stop() u64 {
-    const elapsed: f64 = @floatFromInt(timer.read()) ;
-    return @intFromFloat(elapsed / time.ns_per_ms);
+    const elapsed: u64 = timer.read();
+    return elapsed;
 }

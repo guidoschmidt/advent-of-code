@@ -13,7 +13,10 @@ pub fn printPart2() void {
 }
 
 pub fn printTime(time: u64) void {
-    std.debug.print("\n— ⏲ Running time: {d:3} ms\n", .{time});
+    const ns = time;
+    const us: f64 = @floatFromInt(time / std.time.ns_per_us);
+    const ms: f64 = @floatFromInt(time / std.time.ns_per_ms);
+    std.debug.print("\n— ⏲ Running time: {d:3} ms / {d:3} μs / {d} ns\n", .{ ms, us, ns });
 }
 
 pub const PuzzleInput = enum { EXAMPLE, PUZZLE };

@@ -67,7 +67,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
     const vec_diff = @abs(vec_right - vec_left);
     const result = @reduce(.Add, vec_diff);
-    log.info("Result: {d}", .{result});
+    std.debug.print("Result: {d}", .{result});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
@@ -94,7 +94,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     const vec_score: @Vector(vec_size, isize) = vec_left * vec_similarities;
     const result = @reduce(.Add, vec_score);
-    log.info("Result: {d}", .{result});
+    std.debug.print("Result: {d}", .{result});
 }
 
 pub fn main() !void {
