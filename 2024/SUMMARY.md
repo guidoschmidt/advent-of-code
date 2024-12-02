@@ -1,5 +1,4 @@
 # AoC 2024
-
 ### Notes & Comments
 
 ## Day 1
@@ -15,3 +14,10 @@ multiplication of the left list with the count list and calculate the result
 with `@reduce` again, like in part 1.
 
 ## Day 2
+**Part 1:** 
+- Pitfall: assuming that the puzzle input had only 5 numbers per report
+- All increasing or decreasing: Calculate the sum of signs and check if it
+  matches the number of 
+
+**Part 2:** Create a new vector and initialize it with the numbers from the row,
+just leave out a single number and re-test if the adjusted number is safe.
