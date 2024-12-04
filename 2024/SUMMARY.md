@@ -44,3 +44,10 @@ Finally use `@reduce(.Add, vec_mult)` to add together all the multiplications.
 and `don't`. Maintain a `bool` variable that enables or disables adding the
 multiplication result to the result vector and set it to `true/false`
 respectively when entcountering a `do()` or a `don't()`.
+
+## Day 4
+**Part 1:** parse the input and when encounter an `X`, save the position in a
+candidate list. Then go through all the `X` candidate and check for all
+directions, if the word `XMAS` is in the buffer in this direction.
+
+**Part 2:**
