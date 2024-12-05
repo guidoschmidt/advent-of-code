@@ -50,4 +50,12 @@ respectively when entcountering a `do()` or a `don't()`.
 candidate list. Then go through all the `X` candidate and check for all
 directions, if the word `XMAS` is in the buffer in this direction.
 
-**Part 2:**
+**Part 2:** parse the input like in part 1, but save `A` as candidates. Then
+check all candidates for diagonals using offsets `@Vector`:
+```
+.{-1, 1} and .{ 1, -1}
+.{ 1, 1} and .{-1, -1}
+```
+Make sure to check the word `MAS` in reverse. One particular pitfall was a copy-paste
+bug where I was using `pos + @Vector(2, isize){1, 1}` and `pos - @Vector(2,
+isize){-1, -1}` which is the same thing.

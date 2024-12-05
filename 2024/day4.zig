@@ -22,14 +22,14 @@ const Map = struct {
         for (0..self.cols) |x| {
             try writer.print("\n ", .{});
             for (0..self.rows) |y| {
-                try writer.print("{c} ", .{self.buffer[x][y]});
+                try writer.print("{c}", .{self.buffer[x][y]});
             }
         }
         try writer.print("\n\n ", .{});
         for (0..self.cols) |x| {
             try writer.print("\n ", .{});
             for (0..self.rows) |y| {
-                try writer.print("{c} ", .{self.result[x][y]});
+                try writer.print("{c}", .{self.result[x][y]});
             }
         }
     }
@@ -43,7 +43,7 @@ const Map = struct {
     }
 };
 
-fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
+fn parseInput(allocator: Allocator, input: []const u8, start: u8) !ParseResult {
     const cleaned_input = std.mem.trimRight(u8, input, "\n");
     var row_it = std.mem.split(u8, cleaned_input, "\n");
 
@@ -65,7 +65,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
         map.buffer[x] = try allocator.alloc(u8, row_count);
         map.result[x] = try allocator.alloc(u8, row_count);
         for (0..row_count) |y| {
-            if (row[y] == 'X') {
+            if (row[y] == start) {
                 try candidates.append(.{ @intCast(y), @intCast(x) });
             }
             map.buffer[x][y] = row[y];
@@ -82,14 +82,14 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
 
 fn checkDir(comptime search: []const u8, map: *Map, pos: @Vector(2, isize), dir: @Vector(2, isize)) bool {
     var word = [_]u8{'_'} ** search.len;
-    for (0..4) |i| {
+    for (0..search.len) |i| {
         const at = pos + @as(@TypeOf(pos), @splat(@intCast(i))) * dir;
         if (at[0] >= map.cols or at[1] >= map.rows or
             at[0] < 0 or at[1] < 0) return false;
         word[i] = map.get(at);
     }
     if (std.mem.eql(u8, &word, search)) {
-        for (0..4) |i| {
+        for (0..search.len) |i| {
             const at = pos + @as(@TypeOf(pos), @splat(@intCast(i))) * dir;
             if (word[i] == search[i]) {
                 map.set(at, search[i]);
@@ -100,8 +100,57 @@ fn checkDir(comptime search: []const u8, map: *Map, pos: @Vector(2, isize), dir:
     return false;
 }
 
+fn checkDiag(map: *Map, pos: @Vector(2, isize)) bool {
+    const search = "MAS".*;
+    var search_reversed: @TypeOf(search) = undefined;
+    for (0..search.len) |i| {
+        search_reversed[i] = search[search.len - 1 - i];
+    }
+
+    var word_a = [_]u8{'_'} ** search.len;
+    var word_b = [_]u8{'_'} ** search.len;
+    word_a[1] = 'A';
+    word_b[1] = 'A';
+
+    // Diagonal top right -- bottom left
+    var diag = pos + @Vector(2, isize){ -1, 1 };
+    if (diag[0] < 0 or diag[1] < 0 or
+        diag[0] >= map.cols or diag[1] >= map.rows) return false;
+    word_a[0] = map.get(diag);
+
+    diag = pos + @Vector(2, isize){ 1, -1 };
+    if (diag[0] < 0 or diag[1] < 0 or
+        diag[0] >= map.cols or diag[1] >= map.rows) return false;
+    word_a[2] = map.get(diag);
+
+    // Diagonal top left -- bottom right
+    diag = pos + @Vector(2, isize){ 1, 1 };
+    if (diag[0] < 0 or diag[1] < 0 or
+        diag[0] >= map.cols or diag[1] >= map.rows) return false;
+    word_b[0] = map.get(diag);
+
+    diag = pos + @Vector(2, isize){ -1, -1 };
+    if (diag[0] < 0 or diag[1] < 0 or
+        diag[0] >= map.cols or diag[1] >= map.rows) return false;
+    word_b[2] = map.get(diag);
+
+    var is_x = false;
+    if ((std.mem.eql(u8, &word_a, &search) or
+        std.mem.eql(u8, &word_a, &search_reversed)) and
+        (std.mem.eql(u8, &word_b, &search) or
+        std.mem.eql(u8, &word_b, &search_reversed)))
+    {
+        for ([_]@Vector(2, isize){ .{ 0, 0 }, .{ -1, 1 }, .{ 1, -1 }, .{ 1, 1 }, .{ -1, -1 } }) |offset| {
+            map.set(pos + offset, map.get(pos + offset));
+        }
+        is_x = true;
+    }
+
+    return is_x;
+}
+
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    const parsed = try parseInput(allocator, input);
+    const parsed = try parseInput(allocator, input, 'X');
 
     var map = parsed.map;
     var candidates = parsed.candidates;
@@ -131,8 +180,20 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    const parsed = try parseInput(allocator, input, 'A');
+
+    var map = parsed.map;
+    var candidates = parsed.candidates;
+
+    var mas_count: usize = 0;
+
+    while (candidates.items.len > 0) {
+        const next = candidates.pop();
+        mas_count += if (checkDiag(&map, next)) 1 else 0;
+    }
+
+    log.info("{any}", .{map});
+    std.debug.print("\nResult: {d}", .{mas_count});
 }
 
 pub fn main() !void {
@@ -140,6 +201,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
-    try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
+    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }
