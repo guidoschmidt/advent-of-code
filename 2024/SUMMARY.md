@@ -59,3 +59,29 @@ check all candidates for diagonals using offsets `@Vector`:
 Make sure to check the word `MAS` in reverse. One particular pitfall was a copy-paste
 bug where I was using `pos + @Vector(2, isize){1, 1}` and `pos - @Vector(2,
 isize){-1, -1}` which is the same thing.
+
+## Day 7
+**Part1:** parse the equations and use recursion to check if any of the options
+is valid.
+
+**Part2:**
+
+## Day 9
+**Part 1:** Learning to use `std.ascii.isDigit(c)` to only take digit characters
+from the input. 
+
+## Day 10
+**Part 1:** Find all 0s in the input and store as trail. A trail has an `id`
+(which is the number of it's input starting zero, e.g. the first zero in the input
+creates trails with `id = 0`, the second `0` in the input creates trails with
+`id=1`). Every trail also has a height (in range `[0, 9]`).
+Go through eath starting trail and find it's neighbors (`[-1, 0]`, `[0, -1]`,
+`[1, 0]` and `[0, 1]` respectively West, North, East and Sounth). If the height
+of a neighbour is `+1` of the current trail, create a new trail from that
+position.
+
+To ensure each `9` is only reached once, use a hash map that stores all
+previously visited nines and check before adding to the result.
+
+**Part 2:** This was easy, just had to remove the part where it checks for
+previously visited `9`s.
