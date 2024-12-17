@@ -66,9 +66,15 @@ is valid.
 
 **Part2:**
 
+## Day 8
+**Part1:** Make sure to allow overriding antennas with antinodes, if their
+letter is different from the current antenna.
+
 ## Day 9
 **Part 1:** Learning to use `std.ascii.isDigit(c)` to only take digit characters
-from the input. 
+from the input.
+parsing u8, but converting to usize afterwards and checking for '.' (== 46)
+interferred with idx = 46! Had to code a python version to understand.
 
 ## Day 10
 **Part 1:** Find all 0s in the input and store as trail. A trail has an `id`
