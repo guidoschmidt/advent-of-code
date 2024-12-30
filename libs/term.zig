@@ -10,8 +10,13 @@ pub const white = "\x1B[37m";
 pub const bg_white = "\x1B[47m";
 pub const light_blue = "\x1B[36m";
 pub const gray = "\x1B[37m";
+pub const magenta = "\x1B[95m";
+pub const bg_magenta = "\x1B[105m";
+pub const cyan = "\x1B[36m";
+pub const bg_cyan = "\x1B[46m";
 pub const dark_gray = "\x1B[90m";
 pub const idk = "\x1B[38m";
+
 pub const clear_screen = "\x1B[2J";
 pub const hide_cursor = "\x1B[?25l";
 pub const yx = "\x1B[{d};{d}H";
