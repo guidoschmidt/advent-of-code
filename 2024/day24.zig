@@ -92,8 +92,7 @@ const System = struct {
             }
         }
 
-        aoc.blockAskForNext();
-
+        // aoc.blockAskForNext();
         try self.run();
     }
 
