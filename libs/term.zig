@@ -20,3 +20,5 @@ pub const idk = "\x1B[38m";
 pub const clear_screen = "\x1B[2J";
 pub const hide_cursor = "\x1B[?25l";
 pub const yx = "\x1B[{d};{d}H";
+
+pub const bg_color = "\x1B[48:5:{d}m";
