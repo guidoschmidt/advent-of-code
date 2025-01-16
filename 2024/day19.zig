@@ -44,6 +44,27 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
     };
 }
 
+fn countPossibilities(start: usize, design: []const u8, patterns: *const [][]const u8, cache: *std.AutoHashMap(usize, usize)) usize {
+    if (start == design.len) {
+        return 1;
+    }
+
+    if (cache.contains(start)) {
+        return cache.get(start).?;
+    }
+
+    var matches: usize = 0;
+    for (patterns.*) |pattern| {
+        const end = start + pattern.len;
+        if (end <= design.len and std.mem.eql(u8, design[start..end], pattern)) {
+            matches += countPossibilities(end, design, patterns, cache);
+        }
+    }
+
+    cache.put(start, matches) catch @panic("Could not put on cache!");
+    return matches;
+}
+
 fn matchingPattern(start: usize, design: []const u8, patterns: *const [][]const u8) bool {
     if (start == design.len) return true;
 
@@ -87,8 +108,18 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    const parsed = try parseInput(allocator, input);
+    var result: usize = 0;
+    for (0..parsed.designs.len) |d| {
+        var cache = std.AutoHashMap(usize, usize).init(allocator);
+        const design = parsed.designs[d];
+        log.info("------\n      {s}{s}{s}", .{ t.yellow, design, t.clear });
+        const possible_combinations: usize = countPossibilities(0, design, &parsed.patterns, &cache);
+        result += possible_combinations;
+        log.info("Possible combinations for {s}: {any}", .{ design, possible_combinations });
+    }
+
+    std.debug.print("\nResult: {d}", .{result});
 }
 
 pub fn main() !void {
@@ -97,5 +128,5 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
-    //try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }
