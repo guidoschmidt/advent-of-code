@@ -6,9 +6,14 @@
 
 ### AOC_COOKIE
 To obtain the puzzle inputs, you need to set the environment variable
-`ACO_COOKIE` to the session cookie value from adventofcode.com, e.g. on fish
-shell:
+`ACO_COOKIE` to the session cookie value from adventofcode.com: 
 
+fish shell:
 ```fish
 set -Ux AOC_COOKIE session=XXX...
+```
+
+Powershell:
+```pwsh
+[System.Environment]::SetEnvironmentVariable("AOC_COOKIE", "session=XXX...")
 ```
