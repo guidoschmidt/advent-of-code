@@ -8,6 +8,13 @@ const BuildTargetResults = struct {
 fn createBuildTarget(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, aoc_module: *std.Build.Module, libs: *std.StringHashMap(*std.Build.Module), year: u16, day: usize) !BuildTargetResults {
     var src_buf: [32]u8 = undefined;
     const source_file = try std.fmt.bufPrint(&src_buf, "{d}/day{d}.zig", .{ year, day });
+
+    // Check if source file actually exists
+    _ = std.fs.cwd().openFile(source_file, .{}) catch |err| {
+        std.debug.print("\n{s} does not exist!", .{source_file});
+        return err;
+    };
+
     var name_buf: [32]u8 = undefined;
     const name = try std.fmt.bufPrint(&name_buf, "{d}-{d}", .{ year, day });
     const exe = b.addExecutable(.{
@@ -68,7 +75,7 @@ pub fn build(b: *std.Build) !void {
     // command itself, like this: `zig build run -- arg1 arg2 etc`
     if (b.args) |args| {
         const day = std.fmt.parseInt(u8, args[0], 10) catch 1;
-        const res = try createBuildTarget(b, target, optimize, aoc_module, &libs, YEAR, day);
+        const res = createBuildTarget(b, target, optimize, aoc_module, &libs, YEAR, day) catch return;
 
         const run_cmd = b.addRunArtifact(res.exe);
         run_cmd.step.dependOn(b.getInstallStep());
@@ -84,7 +91,7 @@ pub fn build(b: *std.Build) !void {
     }
 
     for (1..25) |day| {
-        _ = try createBuildTarget(b, target, optimize, aoc_module, &libs, YEAR, day);
+        _ = createBuildTarget(b, target, optimize, aoc_module, &libs, YEAR, day) catch continue;
     }
 
     // Interactive prompt
