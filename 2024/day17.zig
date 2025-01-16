@@ -71,6 +71,21 @@ const Machine = struct {
         try writer.print("{s}\n\n", .{t.clear});
     }
 
+    pub fn reverseEngineer(self: *Machine) !void {
+        log.info("{any}", .{self});
+        if (self.instr_ptr >= self.program.len - 1) {
+            return;
+        }
+
+        const instruction: Instruction = @enumFromInt(self.program[self.instr_ptr]);
+        const operand: usize = self.program[self.instr_ptr + 1];
+        log.info("> {any}([{d}])", .{ instruction, operand });
+        try self.reverseInstr(instruction, operand);
+
+        aoc.blockAskForNext();
+        try self.reverseEngineer();
+    }
+
     pub fn run(self: *Machine) !void {
         log.info("{any}", .{self});
         if (self.instr_ptr >= self.program.len - 1) {
@@ -85,6 +100,58 @@ const Machine = struct {
         // aoc.blockAskForNext();
 
         try self.run();
+    }
+
+    pub fn reverseInstr(self: *Machine, instr: Instruction, op: usize) !void {
+        switch (instr) {
+            .ADV => {
+                const combo_op = self.retrieveComboOp(op);
+                const numerator = self.memory[@intFromEnum(Register.A)];
+                const denominator = std.math.pow(usize, 2, combo_op);
+                self.memory[@intFromEnum(Register.A)] = numerator / denominator;
+                self.instr_ptr += 2;
+            },
+            .BXL => {
+                self.memory[@intFromEnum(Register.B)] = self.memory[@intFromEnum(Register.B)] ^ op;
+                self.instr_ptr += 2;
+            },
+            .BST => {
+                const combo_op = self.retrieveComboOp(op);
+                self.memory[@intFromEnum(Register.B)] = @mod(combo_op, 8);
+                self.instr_ptr += 2;
+            },
+            .JNZ => {
+                if (self.memory[@intFromEnum(Register.A)] == 0) {
+                    self.instr_ptr += 2;
+                    return;
+                }
+                self.instr_ptr = op;
+            },
+            .BXC => {
+                self.memory[@intFromEnum(Register.B)] = self.memory[@intFromEnum(Register.B)] ^ self.memory[@intFromEnum(Register.C)];
+                self.instr_ptr += 2;
+            },
+            .OUT => {
+                const combo_op = self.retrieveComboOp(op);
+                const result = @mod(combo_op, 8);
+                try self.output.append(result);
+                self.instr_ptr += 2;
+            },
+            .BDV => {
+                const combo_op = self.retrieveComboOp(op);
+                const numerator = self.memory[@intFromEnum(Register.A)];
+                const denominator = std.math.pow(usize, 2, combo_op);
+                self.memory[@intFromEnum(Register.B)] = numerator / denominator;
+                self.instr_ptr += 2;
+            },
+            .CDV => {
+                const combo_op = self.retrieveComboOp(op);
+                const numerator = self.memory[@intFromEnum(Register.A)];
+                const denominator = std.math.pow(usize, 2, combo_op);
+                self.memory[@intFromEnum(Register.C)] = numerator / denominator;
+                self.instr_ptr += 2;
+            },
+        }
     }
 
     pub fn execInstr(self: *Machine, instr: Instruction, op: usize) !void {
@@ -184,8 +251,18 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    var machine = try parseInput(allocator, input);
+    try machine.reverseEngineer();
+}
+
+test "reverse bitwise XOR" {
+    const in: usize = 10;
+    const op: usize = 9;
+    var result = in ^ op;
+    try std.testing.expectEqual(@as(usize, 3), result);
+
+    result = result ^ op;
+    try std.testing.expectEqual(@as(usize, 10), result);
 }
 
 pub fn main() !void {
@@ -193,6 +270,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
     try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
 }

@@ -57,7 +57,6 @@ const Racetrack = struct {
 
     pub fn findCheats(self: *Racetrack, allocator: Allocator) !usize {
         var processed = VectorSet(2, usize).init(allocator);
-
         var cheat_save_list = std.AutoHashMap(usize, usize).init(allocator);
 
         for (self.track.items) |p| {
@@ -111,6 +110,94 @@ const Racetrack = struct {
             }
         }
         // self.animate();
+
+        var it = cheat_save_list.keyIterator();
+        var cheats: [][2]usize = try allocator.alloc([2]usize, cheat_save_list.count());
+        var i: usize = 0;
+        while (it.next()) |cheat_saving| : (i += 1) {
+            const count = cheat_save_list.get(cheat_saving.*) orelse 0;
+            cheats[i][0] = count;
+            cheats[i][1] = cheat_saving.*;
+        }
+
+        std.mem.sort([2]usize, cheats, {}, comptime struct {
+            pub fn f(_: void, a: [2]usize, b: [2]usize) bool {
+                return a[1] < b[1];
+            }
+        }.f);
+
+        var cheats_savings: usize = 0;
+        for (cheats) |cheat| {
+            if (cheat[1] >= cheat_savings_threshold) cheats_savings += cheat[0];
+            log.info("There are {d} cheats that save {d} picoseconds.", .{
+                cheat[0],
+                cheat[1],
+            });
+        }
+
+        return cheats_savings;
+    }
+
+    pub fn findCheatsInRange(self: *Racetrack, allocator: Allocator, comptime range: isize) !usize {
+        var processed = VectorSet(2, usize).init(allocator);
+        var cheat_save_list = std.AutoHashMap(usize, usize).init(allocator);
+
+        for (self.track.items) |p| {
+            const start = p;
+            const start_idx = self.onTrack(start).?;
+
+            var xdir: isize = -range;
+            var ydir: isize = -range;
+            while (xdir < range) : (xdir += 1) {
+                ydir = -range;
+                while (ydir < range) : (ydir += 1) {
+                    const n = @as(@Vector(2, isize), @intCast(start)) + @Vector(2, isize){ xdir, ydir };
+                    if (!self.inBounds(n)) continue;
+                    const neigbour = @as(@Vector(2, usize), @intCast(n));
+                    if (processed.contains(neigbour)) continue;
+                    if (self.buffer[neigbour[1]][neigbour[0]] == '#') {
+                        // --- Visualize neighbour 'pixel'
+                        var before = self.buffer[neigbour[1]][neigbour[0]];
+                        self.buffer[neigbour[1]][neigbour[0]] = 'N';
+                        self.animate();
+                        aoc.blockAskForNext();
+                        self.buffer[neigbour[1]][neigbour[0]] = before;
+
+                        const dirs = [_]@Vector(2, isize){
+                            @Vector(2, isize){ -1, 0 },
+                            @Vector(2, isize){ 0, 1 },
+                            @Vector(2, isize){ 1, 0 },
+                            @Vector(2, isize){ 0, -1 },
+                        };
+                        for (dirs) |d| {
+                            const e = @as(@Vector(2, isize), @intCast(n)) + d;
+                            if (!self.inBounds(e)) continue;
+                            if (self.onTrack(@intCast(e))) |idx| {
+                                log.info("{d} -> # {d} -> {d} [{d}]", .{ start, neigbour, e, idx });
+
+                                // @TODO
+                                const track_length_to_cheat: usize = start_idx + @as(usize, @intCast(@abs(ydir) + @abs(xdir)));
+                                const track_length_rest: usize = self.track.items.len - idx;
+                                const saves = self.track.items.len - 1 - @min(track_length_rest + track_length_to_cheat, self.track.items.len - 1);
+                                log.info("   >>> Cheat saves {d} picoseconds [shortened length: {d} / {d}]", .{ saves, track_length_to_cheat, self.track.items.len });
+
+                                const prev = cheat_save_list.get(saves) orelse 0;
+                                try cheat_save_list.put(saves, prev + 1);
+
+                                // --- Visualize cheat path
+                                before = self.buffer[@intCast(e[1])][@intCast(e[0])];
+                                self.buffer[@intCast(e[1])][@intCast(e[0])] = 'C';
+                                self.animate();
+                                self.buffer[@intCast(e[1])][@intCast(e[0])] = before;
+                                aoc.blockAskForNext();
+
+                                try processed.insert(neigbour);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         var it = cheat_save_list.keyIterator();
         var cheats: [][2]usize = try allocator.alloc([2]usize, cheat_save_list.count());
@@ -207,7 +294,7 @@ const Racetrack = struct {
                     'S', 'E' => std.debug.print("{s}{c} {s}", .{ t.yellow, v, t.clear }),
                     'X' => std.debug.print("{s}{c} {s}", .{ t.bg_red, ' ', t.clear }),
                     'C' => std.debug.print("{s}{c} {s}", .{ t.bg_cyan, 'C', t.clear }),
-                    'N' => std.debug.print("{s}{c} {s}", .{ t.bg_red, 'N', t.clear }),
+                    'N' => std.debug.print("{s}{c} {s}", .{ t.bg_green, 'N', t.clear }),
                     else => std.debug.print("{s}{c} {s}", .{ t.dark_gray, v, t.clear }),
                 }
             }
@@ -233,8 +320,16 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    var racetrack = try parseInput(allocator, input);
+
+    std.debug.print(t.clear_screen, .{});
+    std.debug.print(t.hide_cursor, .{});
+
+    const refrence_duration = try racetrack.findTrack(allocator, racetrack.start);
+    log.info("Duration: {d} ps", .{refrence_duration - 1});
+    const cheat_count = try racetrack.findCheatsInRange(allocator, 20);
+
+    std.debug.print("\nResult: {d}", .{cheat_count});
 }
 
 pub fn main() !void {
@@ -242,6 +337,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
     try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
 }

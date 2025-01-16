@@ -128,11 +128,10 @@ const Maze = struct {
             const dir: usize = pos[2];
             const score: usize = pos[3];
 
+            self.flood_fill_buffer[y][x] = @intCast(score);
             if (@reduce(.And, @Vector(2, usize){ x, y } == self.start)) {
                 return score;
             }
-
-            self.flood_fill_buffer[y][x] = @intCast(score);
 
             const offsets = [4]@Vector(2, isize){ .{ 1, 0 }, .{ -1, 0 }, .{ 0, 1 }, .{ 0, -1 } };
             const dirs = [4]Dir{ .N, .E, .S, .W };
@@ -154,15 +153,13 @@ const Maze = struct {
         return 0;
     }
 
-    pub fn findPath(self: *Maze, reindeer: *Reindeer) usize {
-        var score: usize = 0;
+    pub fn findPath(self: *Maze, reindeer: *Reindeer) void {
         reindeer.pos = @intCast(self.start);
         while (true) {
             self.buffer[@intCast(@max(0, reindeer.pos[1]))][@intCast(@max(0, reindeer.pos[0]))] = reindeer.dir.char();
 
             if (@reduce(.And, reindeer.pos == @as(@Vector(2, isize), @intCast(self.end)))) {
                 reindeer.pos = @intCast(self.end);
-                score += 1;
                 break;
             }
 
@@ -176,24 +173,29 @@ const Maze = struct {
             var next: @Vector(2, isize) = reindeer.pos;
             var next_dir: Dir = reindeer.dir;
             var next_ff_score = self.flood_fill_buffer[@intCast(next[1])][@intCast(next[0])];
+
             for (0..offsets.len) |i| {
                 const o = offsets[i];
                 const local_next = @max(reindeer.pos + o, @Vector(2, isize){ 0, 0 });
-                const local_dir = dirs[i];
                 if (self.buffer[@intCast(local_next[1])][@intCast(local_next[0])] == '#') continue;
                 const local_ff_score = self.flood_fill_buffer[@intCast(local_next[1])][@intCast(local_next[0])];
 
-                if (local_ff_score <= next_ff_score) {
+                log.info("{d}, {d}", .{ next_ff_score, local_ff_score });
+
+                if (local_ff_score <= next_ff_score or
+                    next_ff_score == -1)
+                {
                     next = local_next;
                     next_ff_score = local_ff_score;
-                    next_dir = local_dir;
+                    next_dir = dirs[i];
                 }
             }
-            score += Maze.calcScore(1, @abs(@intFromEnum(reindeer.dir) - @intFromEnum(next_dir)));
             reindeer.dir = next_dir;
             reindeer.pos = next;
+
+            log.info("{any}", .{self});
+            aoc.blockAskForNext();
         }
-        return score;
     }
 
     fn calcScore(step: usize, rot: u3) usize {
@@ -263,8 +265,17 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    var parsed = try parseInput(allocator, input);
+    log.info("{any}", .{parsed.reindeer});
+    log.info("{any}", .{parsed.maze});
+
+    const result = try parsed.maze.floodFill(allocator);
+    log.info("{any}", .{parsed.maze});
+
+    parsed.maze.findPath(&parsed.reindeer);
+    log.info("{any}", .{parsed.maze});
+
+    std.debug.print("\nResult: {d}", .{result});
 }
 
 pub fn main() !void {
@@ -272,6 +283,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
     try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
 }

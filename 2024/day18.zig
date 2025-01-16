@@ -71,9 +71,6 @@ const MemorySpace = struct {
     }
 
     pub fn aStar(self: *MemorySpace, allocator: Allocator, trace_path: bool) !?usize {
-        std.debug.print(t.clear_screen, .{});
-        std.debug.print(t.hide_cursor, .{});
-
         const result: ?usize = undefined;
 
         self.cell_buffer = try allocator.alloc([]Cell, self.size[1]);
@@ -161,6 +158,8 @@ const MemorySpace = struct {
     }
 
     pub fn animate(self: MemorySpace) void {
+        std.debug.print(t.clear_screen, .{});
+        std.debug.print(t.hide_cursor, .{});
         std.debug.print(t.yx, .{ 1, 1 });
         std.debug.print("Corruption Index: {d}", .{self.corruption_idx});
         for (0..self.size[0]) |x| {

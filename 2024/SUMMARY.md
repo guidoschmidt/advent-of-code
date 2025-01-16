@@ -91,3 +91,20 @@ previously visited nines and check before adding to the result.
 
 **Part 2:** This was easy, just had to remove the part where it checks for
 previously visited `9`s.
+
+## Day 13
+**Part 1:**
+
+## Day 17:
+**Part 1:** Make sure to know the difference between bitwis `OR` (`|` in zig) ]and bitwise
+`XOR` (`^` in zig)!
+
+## Day 18:
+**Part 1:** 
+- A* search algorithm
+
+**Part 2:** 
+- Start at half of corruptions, divide by two and add until no path can be found
+- From there go back in coarse steps until the path is free again
+- From there step by step check corruptions to find the first corrupted memory
+  block preventing the exit to be reachable
