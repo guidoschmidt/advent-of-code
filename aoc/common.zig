@@ -21,7 +21,7 @@ pub fn printTime(time: u64) void {
 
 pub const PuzzleInput = enum { EXAMPLE, PUZZLE };
 
-pub fn runPart(allocator: std.mem.Allocator, year: u16, day: u8, input_type: PuzzleInput, comptime part_fn: fn (allocator: Allocator, input: []const u8) anyerror!void) !void {
+pub fn runPart(allocator: std.mem.Allocator, comptime year: u16, comptime day: u8, input_type: PuzzleInput, comptime part_fn: fn (allocator: Allocator, input: []const u8) anyerror!void) !void {
     const input = switch (input_type) {
         .PUZZLE => try puzzle_input.getPuzzleInput(allocator, day, year),
         .EXAMPLE => try puzzle_input.getExampleInput(allocator, day, year),

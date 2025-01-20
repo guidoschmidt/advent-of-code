@@ -60,9 +60,10 @@ pub fn getPuzzleInput(allocator: std.mem.Allocator, day: u8, year: u16) ![]const
     return try file.readToEndAlloc(allocator, stat.size);
 }
 
-pub fn getExampleInput(allocator: std.mem.Allocator, day: u8, year: u16) ![]const u8 {
+pub fn getExampleInput(allocator: std.mem.Allocator, comptime day: u8, comptime year: u16) ![]const u8 {
     var buf: [128]u8 = undefined;
-    const file_path = try std.fmt.bufPrint(&buf, "{d}/input/examples/day{d}.txt", .{ year, day });
+    const path = try std.fs.cwd().realpathAlloc(allocator, ".");
+    const file_path = try std.fmt.bufPrint(&buf, "{s}/{d}/input/examples/day{d}.txt", .{ path, year, day });
     const file = try fs.cwd().openFile(file_path, .{});
     const stat = try file.stat();
     return try file.readToEndAlloc(allocator, stat.size);
