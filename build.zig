@@ -1,13 +1,27 @@
 const std = @import("std");
+const fs = std.fs;
+const aoc_input = @import("aoc/input.zig");
+
+const YEAR: usize = 2024;
 
 const BuildTargetResults = struct {
     exe: *std.Build.Step.Compile,
     tests: *std.Build.Step.Compile,
 };
 
+fn fetchPuzzleInput(allocator: std.mem.Allocator, year: u16, day: usize) !void {
+    var buf: [128]u8 = undefined;
+    const file_path = try std.fmt.bufPrint(&buf, "./aoc/input/{d}/day{d}.txt", .{ year, day });
+    _ = fs.cwd().openFile(file_path, .{}) catch {
+        try aoc_input.getPuzzleInputFromServer(allocator, year, day, file_path);
+    };
+}
+
 fn createBuildTarget(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, aoc_module: *std.Build.Module, libs: *std.StringHashMap(*std.Build.Module), year: u16, day: usize) !BuildTargetResults {
     var src_buf: [32]u8 = undefined;
     const source_file = try std.fmt.bufPrint(&src_buf, "{d}/day{d}.zig", .{ year, day });
+
+    try fetchPuzzleInput(b.allocator, year, day);
 
     // Check if source file actually exists
     _ = std.fs.cwd().openFile(source_file, .{}) catch |err| {
@@ -45,8 +59,6 @@ fn createBuildTarget(b: *std.Build, target: std.Build.ResolvedTarget, optimize: 
 }
 
 pub fn build(b: *std.Build) !void {
-    const YEAR: usize = 2024;
-
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 

@@ -8,7 +8,7 @@ fn getAdventOfCodeCookieFromEnv(allocator: std.mem.Allocator) !?[]const u8 {
     return env_map.get("AOC_COOKIE");
 }
 
-pub fn getPuzzleInputFromServer(allocator: std.mem.Allocator, year: u16, day: u8, file_path: []const u8) ![]const u8 {
+pub fn getPuzzleInputFromServer(allocator: std.mem.Allocator, year: u16, day: usize, file_path: []const u8) !void {
     var buf: [128]u8 = undefined;
     if (std.fs.path.dirname(file_path)) |basepath| {
         fs.cwd().makeDir(basepath) catch {
@@ -20,11 +20,9 @@ pub fn getPuzzleInputFromServer(allocator: std.mem.Allocator, year: u16, day: u8
     const cookie_from_env = try getAdventOfCodeCookieFromEnv(allocator);
     if (cookie_from_env == null) {
         std.log.err("\nPlease set AOC_COOKIE env variable", .{});
-        return "";
+        return;
     }
     std.debug.print("\nAOC_COOKIE: {s}", .{cookie_from_env.?});
-    // try headers.append("Cookie", cookie_from_env.?);
-    // defer headers.deinit();
 
     var client = http.Client{ .allocator = allocator };
     defer client.deinit();
@@ -38,33 +36,24 @@ pub fn getPuzzleInputFromServer(allocator: std.mem.Allocator, year: u16, day: u8
     if (req.status == .ok) {
         std.debug.print("\nSuccess", .{});
     }
+    std.debug.print("{s}", .{body.items});
     if (std.mem.containsAtLeast(u8, body.items, 1, "Please log in")) {
-        @panic("Please make sure AOC_COOKIE is set!");
+        std.debug.print("Please make sure AOC_COOKIE is set!", .{});
+        return;
     }
 
     const new_file = try fs.cwd().createFile(file_path, .{});
     try new_file.writeAll(body.items);
-    return body.items;
 }
 
-pub fn getPuzzleInput(allocator: std.mem.Allocator, day: u8, year: u16) ![]const u8 {
-    var buf: [128]u8 = undefined;
-    const file_path = try std.fmt.bufPrint(&buf, "{d}/input/day{d}.txt", .{ year, day });
-    const file = fs.cwd().openFile(file_path, .{}) catch {
-        return getPuzzleInputFromServer(allocator, year, day, file_path);
-    };
-    const stat = try file.stat();
-    if (stat.size == 0) {
-        return getPuzzleInputFromServer(allocator, year, day, file_path);
-    }
-    return try file.readToEndAlloc(allocator, stat.size);
+pub fn getPuzzleInput(comptime day: u8, comptime year: u16) ![]const u8 {
+    var compbuf: [128]u8 = undefined;
+    const path = try std.fmt.bufPrint(&compbuf, "./input/{d}/day{d}.txt", .{ year, day });
+    return @embedFile(path);
 }
 
-pub fn getExampleInput(allocator: std.mem.Allocator, comptime day: u8, comptime year: u16) ![]const u8 {
+pub fn getExampleInput(comptime day: u8, comptime year: u16) ![]const u8 {
     var buf: [128]u8 = undefined;
-    const path = try std.fs.cwd().realpathAlloc(allocator, ".");
-    const file_path = try std.fmt.bufPrint(&buf, "{s}/{d}/input/examples/day{d}.txt", .{ path, year, day });
-    const file = try fs.cwd().openFile(file_path, .{});
-    const stat = try file.stat();
-    return try file.readToEndAlloc(allocator, stat.size);
+    const file_path = try std.fmt.bufPrint(&buf, "./input/{d}/examples/day{d}.txt", .{ year, day });
+    return @embedFile(file_path);
 }
