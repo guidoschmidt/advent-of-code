@@ -92,6 +92,13 @@ previously visited nines and check before adding to the result.
 **Part 2:** This was easy, just had to remove the part where it checks for
 previously visited `9`s.
 
+## Day 11
+**Part 1:** naively used a ArrayList to grow the stones. Worked well for part 1.
+
+**Part 2:** had to check reddit (e.g. [davidsharicks solution in
+Python](https://gitlab.com/davidsharick/advent-of-code-2024/-/blob/main/day11/day11.py))
+to find this idea of using a counter instead of a list-type data structure.
+
 ## Day 13
 **Part 1:**
 
@@ -108,3 +115,10 @@ previously visited `9`s.
 - From there go back in coarse steps until the path is free again
 - From there step by step check corruptions to find the first corrupted memory
   block preventing the exit to be reachable
+
+
+## Day 23
+**Part 2:**
+- https://github.com/stefanpartheym/zig-graph
+- Tarjans algorithm
+- Find cliques of a grahp (python networkx)

@@ -60,38 +60,78 @@ fn apply(allocator: Allocator, input: []const usize) !std.ArrayList(usize) {
     return result;
 }
 
+fn applyWithMap(allocator: Allocator, input: std.AutoArrayHashMap(usize, usize)) !std.AutoArrayHashMap(usize, usize) {
+    var new_stone_map = std.AutoArrayHashMap(usize, usize).init(allocator);
+
+    var input_it = input.iterator();
+
+    while (input_it.next()) |it| {
+        const stone = it.key_ptr.*;
+        const prev_count = it.value_ptr.*;
+
+        if (stone == 0) {
+            const prev_ones = new_stone_map.get(1) orelse 0;
+            try new_stone_map.put(1, prev_count + prev_ones);
+            continue;
+        }
+
+        const digit_count = countDigits(stone);
+        if (@mod(digit_count, 2) == 0) {
+            const split = splitNumber(stone, digit_count);
+            const split_l_prev = new_stone_map.get(split[0]) orelse 0;
+            try new_stone_map.put(split[0], prev_count + split_l_prev);
+            const split_r_prev = new_stone_map.get(split[1]) orelse 0;
+            try new_stone_map.put(split[1], prev_count + split_r_prev);
+            continue;
+        }
+
+        const mul = stone * 2024;
+        try new_stone_map.put(mul, prev_count);
+    }
+
+    return new_stone_map;
+}
+
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var stones = try parseInput(allocator, input);
     printStones(stones.items);
 
     for (0..25) |_| {
-        const prev_count = stones.items.len;
         const new = try apply(allocator, stones.items);
+        // printStones(new.items);
         stones.deinit();
         stones = new;
-        const new_count = stones.items.len;
-        log.info("{d}", .{@abs(new_count - prev_count)});
-        // printStones(stones.items);
-        // std.debug.print("\nResult It #{d}: {d}", .{ i, stones.items.len });
-        // aoc.blockAskForNext();
     }
 
     std.debug.print("\nResult: {d}", .{stones.items.len});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    var stones = try parseInput(allocator, input);
+    const stones = try parseInput(allocator, input);
     printStones(stones.items);
 
-    for (0..75) |i| {
-        log.info("{d}", .{i});
-        const new = try apply(allocator, stones.items);
-        stones.deinit();
-        stones = new;
-        std.debug.print("\nResult: {d}\n", .{stones.items.len});
+    var stones_map = std.AutoArrayHashMap(usize, usize).init(allocator);
+    for (stones.items) |stone| {
+        const prev = stones_map.get(stone) orelse 0;
+        try stones_map.put(stone, prev + 1);
     }
 
-    std.debug.print("\nResult: {d}", .{stones.items.len});
+    var count: usize = 0;
+    var stones_it = stones_map.iterator();
+    for (0..75) |i| {
+        log.info("{d}", .{i});
+        const new = try applyWithMap(allocator, stones_map);
+        stones_map.deinit();
+        stones_map = new;
+        stones_it = stones_map.iterator();
+        count = 0;
+        while (stones_it.next()) |it| {
+            // log.info("[{d}]: {d}", .{ it.key_ptr.*, it.value_ptr.* });
+            count += it.value_ptr.*;
+        }
+    }
+
+    std.debug.print("\nResult: {d}", .{count});
 }
 
 test "simple test" {
@@ -129,5 +169,5 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
-    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }
