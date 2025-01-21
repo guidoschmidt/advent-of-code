@@ -22,4 +22,6 @@ Powershell:
 - Use [terminal grahpics
   protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) via
   [libvaxis](https://github.com/rockorager/libvaxis)
-- Comomn data structures (e.g. 2D map, graph, etc.)
+- Implement common re-usable data structures (e.g. 2D map, graph, etc.) and
+  algorithms (e.g. depth-first search, dijkstra/A* shortest-path like algorithms
+  etc.)
