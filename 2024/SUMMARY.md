@@ -60,6 +60,19 @@ Make sure to check the word `MAS` in reverse. One particular pitfall was a copy-
 bug where I was using `pos + @Vector(2, isize){1, 1}` and `pos - @Vector(2,
 isize){-1, -1}` which is the same thing.
 
+## Day 5
+**Part 1:** This was straight forward: parse the page-ordering rules and the
+page number sequences. Then just go through the sequences one by one and check
+for each page-ordering rule to be valid. Select the middle number for each and
+add those up. 
+
+**Part 2:** First had to find the proper way of re-ordering on paper for an
+example number sequence. Then just re-arrange the numbers in the sequence until
+all page ordering rules are correct (for the example input, this needed to be
+done only once, but since re-ordering can result in a new conflict with another
+page ordering rule, you might need to do this more often until all page ordering
+rules are met!).
+
 ## Day 7
 **Part1:** parse the equations and use recursion to check if any of the options
 is valid.
