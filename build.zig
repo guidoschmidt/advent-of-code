@@ -15,6 +15,17 @@ fn fetchPuzzleInput(allocator: std.mem.Allocator, year: u16, day: usize) !void {
     _ = fs.cwd().openFile(file_path, .{}) catch {
         try aoc_input.getPuzzleInputFromServer(allocator, year, day, file_path);
     };
+
+    // Create examples input txt files, if not existing
+    const example_file_path = try std.fmt.bufPrint(&buf, "./aoc/input/{d}/examples/day{d}.txt", .{ year, day });
+    if (std.fs.path.dirname(example_file_path)) |basepath| {
+        fs.cwd().makeDir(basepath) catch {
+            std.debug.print("\n{s} already exists. Continue...", .{basepath});
+        };
+        _ = std.fs.cwd().createFile(example_file_path, .{}) catch {
+            std.debug.print("\n{s} already exists. Continue...", .{example_file_path});
+        };
+    }
 }
 
 fn createBuildTarget(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, aoc_module: *std.Build.Module, libs: *std.StringHashMap(*std.Build.Module), year: u16, day: usize) !BuildTargetResults {

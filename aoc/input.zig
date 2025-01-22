@@ -47,13 +47,13 @@ pub fn getPuzzleInputFromServer(allocator: std.mem.Allocator, year: u16, day: us
 }
 
 pub fn getPuzzleInput(comptime day: u8, comptime year: u16) ![]const u8 {
-    var compbuf: [128]u8 = undefined;
-    const path = try std.fmt.bufPrint(&compbuf, "./input/{d}/day{d}.txt", .{ year, day });
+    var buf: [128]u8 = undefined;
+    const path = try std.fmt.bufPrint(&buf, "./input/{d}/day{d}.txt", .{ year, day });
     return @embedFile(path);
 }
 
 pub fn getExampleInput(comptime day: u8, comptime year: u16) ![]const u8 {
     var buf: [128]u8 = undefined;
-    const file_path = try std.fmt.bufPrint(&buf, "./input/{d}/examples/day{d}.txt", .{ year, day });
-    return @embedFile(file_path);
+    const path = try std.fmt.bufPrint(&buf, "./input/{d}/examples/day{d}.txt", .{ year, day });
+    return @embedFile(path);
 }
