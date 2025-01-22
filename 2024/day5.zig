@@ -6,8 +6,8 @@ const Allocator = std.mem.Allocator;
 const log = std.log;
 
 const ParseResult = struct {
-    updates: *std.ArrayList([]usize),
-    ordering_rules: *std.ArrayList(@Vector(2, usize)),
+    updates: std.ArrayList([]usize),
+    ordering_rules: std.ArrayList(@Vector(2, usize)),
 };
 
 fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
@@ -40,13 +40,13 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
     }
 
     return ParseResult{
-        .updates = &updates,
-        .ordering_rules = &ordering_rules,
+        .updates = updates,
+        .ordering_rules = ordering_rules,
     };
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    const parsed = try parseInput(allocator, input);
+    var parsed = try parseInput(allocator, input);
 
     var center_values: @Vector(1000, usize) = @splat(0);
     var i: usize = 0;
@@ -114,19 +114,19 @@ fn reorder(next: []usize, ordering_rules: *std.ArrayList(@Vector(2, usize))) voi
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    const parsed = try parseInput(allocator, input);
+    var parsed = try parseInput(allocator, input);
 
     var center_values: @Vector(1000, usize) = @splat(0);
     var i: usize = 0;
     while (parsed.updates.items.len > 0) : (i += 1) {
-        const next = parsed.updates.*.pop();
+        const next = parsed.updates.pop();
 
-        const valid = isValid(next, parsed.ordering_rules);
+        const valid = isValid(next, &parsed.ordering_rules);
         if (!valid) {
             log.info("Original:  {d}", .{next});
 
-            while (!isValid(next, parsed.ordering_rules)) {
-                reorder(next, parsed.ordering_rules);
+            while (!isValid(next, &parsed.ordering_rules)) {
+                reorder(next, &parsed.ordering_rules);
             }
 
             const center = next.len / 2;
