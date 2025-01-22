@@ -80,7 +80,7 @@ const AntennaMap = struct {
 
 fn parseInput(allocator: Allocator, input: []const u8) !AntennaMap {
     const trimmed = std.mem.trim(u8, input, "\n");
-    var row_it = std.mem.split(u8, trimmed, "\n");
+    var row_it = std.mem.splitSequence(u8, trimmed, "\n");
     var map = AntennaMap{};
     try map.init(allocator, &row_it);
     return map;
@@ -154,7 +154,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var antinode_count: usize = 0;
     for (0..map.cols) |x| {
         for (0..map.rows) |y| {
-            if (map.viz[x][y] == '#') {
+            if (map.viz[x][y] != '#') {
                 antinode_count += 1;
             }
         }
@@ -164,8 +164,71 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    var map = try parseInput(allocator, input);
+    log.info("# Antennas: {d}", .{map.antenna_positions.items.len});
+
+    const antennas = try map.antenna_positions.clone();
+    var antenna_pairs = std.ArrayList(AntennaPair).init(allocator);
+
+    while (map.antenna_positions.items.len > 0) {
+        const a = map.antenna_positions.pop();
+        for (antennas.items) |b| {
+            if (a[0] == b[0])
+                try antenna_pairs.append(AntennaPair{ .a = a, .b = b });
+        }
+    }
+
+    for (antenna_pairs.items) |pair| {
+        if (pair.a[1] == pair.b[1] and pair.a[2] == pair.b[2]) continue;
+        const distance: @Vector(3, isize) = @intCast(pair.b - pair.a);
+
+        var s: usize = 1;
+        while (s <= @max(map.rows, map.cols)) {
+            const s_vec: @Vector(3, isize) = @splat(@as(isize, @intCast(s)));
+            log.info("{d}: DIST [{d}] -- [{d} x {d}]", .{ s, s_vec[1], map.rows, map.cols });
+            var antinode_a = @Vector(3, isize){ antinode_char, pair.a[1], pair.a[2] };
+            var antinode_b = @Vector(3, isize){ antinode_char, pair.b[1], pair.b[2] };
+            if (pair.a[1] < pair.b[1] or pair.a[2] < pair.b[2]) {
+                antinode_a -= distance * s_vec;
+                antinode_b += distance * s_vec;
+            } else {
+                antinode_a += distance * s_vec;
+                antinode_b -= distance * s_vec;
+            }
+
+            if (map.viz[@intCast(pair.a[1])][@intCast(pair.a[2])] == '.')
+                map.viz[@intCast(pair.a[1])][@intCast(pair.a[2])] = @intCast(pair.a[0]);
+
+            if (map.viz[@intCast(pair.b[1])][@intCast(pair.b[2])] == '.')
+                map.viz[@intCast(pair.b[1])][@intCast(pair.b[2])] = @intCast(pair.b[0]);
+
+            if (!(antinode_a[1] < 0 or antinode_a[1] >= map.cols or
+                antinode_a[2] < 0 or antinode_a[2] >= map.rows))
+            {
+                map.viz[@intCast(antinode_a[1])][@intCast(antinode_a[2])] = '#';
+            }
+
+            if (!(antinode_b[1] < 0 or antinode_b[1] >= map.cols or
+                antinode_b[2] < 0 or antinode_b[2] >= map.rows))
+            {
+                map.viz[@intCast(antinode_b[1])][@intCast(antinode_b[2])] = '#';
+            }
+
+            s += 1;
+        }
+        log.info("{any}", .{map});
+    }
+
+    var antinode_count: usize = 0;
+    for (0..map.cols) |x| {
+        for (0..map.rows) |y| {
+            if (map.viz[x][y] != '.') {
+                antinode_count += 1;
+            }
+        }
+    }
+
+    std.debug.print("\nResult: {d}", .{antinode_count});
 }
 
 pub fn main() !void {
@@ -174,5 +237,5 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
-    // try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }

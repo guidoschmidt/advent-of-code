@@ -12,8 +12,10 @@ const BuildTargetResults = struct {
 fn fetchPuzzleInput(allocator: std.mem.Allocator, year: u16, day: usize) !void {
     var buf: [128]u8 = undefined;
     const file_path = try std.fmt.bufPrint(&buf, "./aoc/input/{d}/day{d}.txt", .{ year, day });
-    _ = fs.cwd().openFile(file_path, .{}) catch {
-        try aoc_input.getPuzzleInputFromServer(allocator, year, day, file_path);
+    _ = fs.cwd().openFile(file_path, .{}) catch |err| {
+        if (err == std.fs.File.OpenError.FileNotFound) {
+            try aoc_input.getPuzzleInputFromServer(allocator, year, day, file_path);
+        }
     };
 
     // Create examples input txt files, if not existing
@@ -22,8 +24,12 @@ fn fetchPuzzleInput(allocator: std.mem.Allocator, year: u16, day: usize) !void {
         fs.cwd().makeDir(basepath) catch {
             std.debug.print("\n{s} already exists. Continue...", .{basepath});
         };
-        _ = std.fs.cwd().createFile(example_file_path, .{}) catch {
-            std.debug.print("\n{s} already exists. Continue...", .{example_file_path});
+        _ = std.fs.cwd().openFile(example_file_path, .{}) catch |err| {
+            if (err == std.fs.File.OpenError.FileNotFound) {
+                _ = std.fs.cwd().createFile(example_file_path, .{}) catch {
+                    std.debug.print("\n{s} already exists. Continue...", .{example_file_path});
+                };
+            }
         };
     }
 }
