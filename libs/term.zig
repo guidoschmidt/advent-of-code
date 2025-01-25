@@ -7,6 +7,7 @@ pub const yellow = "\x1B[33m";
 pub const bg_yellow = "\x1B[43m";
 pub const blue = "\x1B[34m";
 pub const white = "\x1B[37m";
+pub const black = "\x1B[30m";
 pub const bg_white = "\x1B[47m";
 pub const light_blue = "\x1B[36m";
 pub const gray = "\x1B[37m";
