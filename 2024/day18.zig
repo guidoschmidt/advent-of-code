@@ -229,20 +229,18 @@ fn parseInput(allocator: Allocator, input: []const u8) !MemorySpace {
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var memory_space = try parseInput(allocator, input);
-
     memory_space.markCorruptions(memory_space.corruption_idx);
 
-    std.debug.print("\n{s}", .{t.hide_cursor});
-    std.debug.print("\n{s}", .{t.clear_screen});
+    std.debug.print(t.hide_cursor, .{});
+    std.debug.print(t.clear_screen, .{});
     const result = try memory_space.aStar(allocator, true);
-    std.debug.print("\nResult: {d}", .{result});
+    std.debug.print("\nResult: {any}", .{result});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var memory_space = try parseInput(allocator, input);
 
     log.info("# Total Corruptions: {d}", .{memory_space.corruptions.items.len});
-    aoc.blockAskForNext();
 
     var idx: usize = 2900;
     var blocking_pos = memory_space.corruptions.items[idx];
@@ -263,7 +261,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
             // Found no solution, there's a blocking corrupted memory block!
             blocking_pos = memory_space.corruptions.items[idx];
             std.debug.print("\nResult: {d}, {d}", .{ blocking_pos, memory_space.current_cell.?.pos });
-            aoc.blockAskForNext();
+            // aoc.blockAskForNext();
         }
     }
 }
@@ -273,6 +271,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
     try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }
