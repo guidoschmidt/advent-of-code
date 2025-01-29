@@ -223,6 +223,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    // try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part1);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
     try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }
