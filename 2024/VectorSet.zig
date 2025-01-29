@@ -31,13 +31,18 @@ pub fn VectorSet(comptime size: usize, comptime T: type) type {
             }
         }
 
+        pub fn remove(self: *VectorSet(size, T), value: @Vector(size, T)) bool {
+            return self.hash_map.remove(value);
+        }
+
         pub fn contains(self: VectorSet(size, T), value: @Vector(size, T)) bool {
             return self.hash_map.contains(value);
         }
 
         pub fn getIndex(self: VectorSet(size, T), idx: usize) @Vector(size, T) {
             var it = self.hash_map.keyIterator();
-            for (0..@max(idx -| 1, 0)) |_| {
+            if (idx == 0) return it.next().?.*;
+            for (0..idx) |_| {
                 _ = it.next().?;
             }
             return it.next().?.*;

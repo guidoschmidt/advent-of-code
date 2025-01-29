@@ -73,6 +73,30 @@ done only once, but since re-ordering can result in a new conflict with another
 page ordering rule, you might need to do this more often until all page ordering
 rules are met!).
 
+## Day 6
+**Part 1:** Solved part 1 right away. Using an integer encoded Dir enum (4
+values to represent up, right, down and left and convert that to a `@Vector(2,
+isize)` value with a helper method) helped a lot. A right turn is then just a
+`+1` on the dir integer modulo 4 (use `@intFromEnum`). My main work went into
+parsing the map and adding ANSI control sequence based animation. `moveGuard`
+takes the guards position and checks if it would hit an obstacle (`#` only for
+part 1), if so change the `dir` property with `turnRight`, otherwise move the
+guard into the current `dir` direction. Store all not-yet visited positions
+(used a copy of `buffer` first for this, after a fresh rewrite for part 2, I
+just used my then available `VectorSet`), the count of thees is the result. 
+
+**Part 2:** Initially I started implementing part 2 but didn't get the right
+result for my puzzle input (though it worked for the example input). So I 
+left it for some time and came back after a few weeks to solve it. After
+wrapping my head around what I did before and where a potential bug could be, I
+went for a rewrite. Using my then available `VectorSet` to store the visited
+path of the guard and the history of the position + direction (encoded in a
+`@Vector(3, isize)`), I finally got the correct answer. With `VectorSet` it was
+quite easy: store each guards position/direction combination for each step in a
+`@Vector(3, isize)` and use `VectorSet.contains()` to check if the guard has
+been on that position before (with the same direction). If that's the case, the
+guard moves in a loop.
+
 ## Day 7
 **Part1:** parse the equations and use recursion to check if any of the options
 is valid.
