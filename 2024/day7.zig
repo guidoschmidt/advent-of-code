@@ -71,7 +71,17 @@ fn solveTree(depth: usize, needed_result: usize, result: usize, numbers: []usize
     if (depth >= numbers.len) {
         return result == needed_result;
     }
-    return solveTree(depth + 1, needed_result, result + numbers[depth], numbers) or solveTree(depth + 1, needed_result, result * numbers[depth], numbers);
+    return solveTree(depth + 1, needed_result, result + numbers[depth], numbers) or
+        solveTree(depth + 1, needed_result, result * numbers[depth], numbers);
+}
+
+fn solveTreeWithConcat(depth: usize, needed_result: usize, result: usize, numbers: []usize) bool {
+    if (depth >= numbers.len) {
+        return result == needed_result;
+    }
+    return solveTreeWithConcat(depth + 1, needed_result, result + numbers[depth], numbers) or
+        solveTreeWithConcat(depth + 1, needed_result, result * numbers[depth], numbers) or
+        solveTreeWithConcat(depth + 1, needed_result, concatNumbers(result, numbers[depth]), numbers);
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
@@ -90,8 +100,42 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    const equations = try parseInput(allocator, input);
+
+    var result: usize = 0;
+
+    for (0..equations.items.len) |i| {
+        const eq = equations.items[i];
+        const is_valid = solveTreeWithConcat(1, eq.result, eq.numbers[0], eq.numbers);
+        if (is_valid)
+            result += eq.result;
+    }
+
+    std.debug.print("\nResult: {d}", .{result});
+}
+
+fn concatNumbers(lhs: usize, rhs: usize) usize {
+    const digits_b = countDigits(usize, rhs, 5) catch unreachable;
+    return (lhs * std.math.pow(usize, 10, digits_b)) + rhs;
+}
+
+fn countDigits(comptime T: type, n: T, comptime max: T) !T {
+    inline for (1..max) |i| {
+        if (n < std.math.pow(T, 10, i)) return i;
+    }
+    unreachable;
+}
+
+test "Test concatenation operator" {
+    var lhs: usize = 9;
+    var rhs: usize = 2;
+    try std.testing.expectEqual(@as(usize, 92), concatNumbers(lhs, rhs));
+    lhs = 13;
+    rhs = 75;
+    try std.testing.expectEqual(@as(usize, 1375), concatNumbers(lhs, rhs));
+    lhs = 123;
+    rhs = 45;
+    try std.testing.expectEqual(@as(usize, 12345), concatNumbers(lhs, rhs));
 }
 
 pub fn main() !void {
@@ -100,5 +144,5 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
-    try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }

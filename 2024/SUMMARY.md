@@ -101,7 +101,15 @@ guard moves in a loop.
 **Part1:** parse the equations and use recursion to check if any of the options
 is valid.
 
-**Part2:**
+**Part2:** to implement the number concatenation operator (`||`), count the
+digits of the right number (use comptime to pre-calculate possible bins) then
+raise the right number with `10^digit_count`, e.g.
+```zig
+const lhs: usize = 12;
+const rhs: usize = 34;
+const digits_rhs = countDigits(rhs);
+const concatenated = (std.math.pow(10, digits_rhs) * lhs) + rhs;
+```
 
 ## Day 8
 **Part1:** Make sure to allow overriding antennas with antinodes, if their
