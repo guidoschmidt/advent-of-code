@@ -23,5 +23,7 @@ jobs:
           version: 0.13.0
 
       - name: Compile all solutions for current year
-        run: |
-          zig build
+        run: zig build
+        env:
+          AOC_COOKIE: ${{ secrets.AOC_COOKIE }}
+        
