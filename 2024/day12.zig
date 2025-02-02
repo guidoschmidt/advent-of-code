@@ -107,26 +107,36 @@ const GardenMap = struct {
     cols: usize = undefined,
     buffer: [][]u8 = undefined,
     processed: [][]bool = undefined,
+    sides: [][]u8 = undefined,
 
     pub fn init(allocator: Allocator, input: []const u8) !GardenMap {
         var instance = GardenMap{};
 
         var row_it = std.mem.split(u8, input, "\n");
 
-        instance.cols = row_it.peek().?.len;
-        instance.rows = 0;
+        instance.cols = row_it.peek().?.len + 2;
+        instance.rows = 2;
         while (row_it.next()) |_| : (instance.rows += 1) {}
         row_it.reset();
 
-        var x: usize = 0;
+        // log.info("map size {d} × {d}", .{ instance.rows, instance.cols });
+
         instance.buffer = try allocator.alloc([]u8, instance.cols);
         instance.processed = try allocator.alloc([]bool, instance.cols);
-        while (row_it.next()) |row| : (x += 1) {
+        instance.sides = try allocator.alloc([]u8, instance.cols);
+        for (0..instance.cols) |x| {
             instance.buffer[x] = try allocator.alloc(u8, instance.rows);
             instance.processed[x] = try allocator.alloc(bool, instance.rows);
+            instance.sides[x] = try allocator.alloc(u8, instance.rows);
+            var row: ?[]const u8 = null;
+            if (x > 0) row = row_it.next();
             for (0..instance.rows) |y| {
-                instance.buffer[x][y] = row[y];
+                instance.buffer[x][y] = ' ';
+                if (row != null and y > 0 and y < instance.rows - 1) {
+                    instance.buffer[x][y] = row.?[y - 1];
+                }
                 instance.processed[x][y] = false;
+                instance.sides[x][y] = ' ';
             }
         }
 
@@ -157,14 +167,15 @@ const GardenMap = struct {
     }
 
     pub fn findRegions(self: *GardenMap, allocator: Allocator) ![]Region {
-        log.info(t.hide_cursor, .{});
-        log.info(t.clear_screen, .{});
+        // log.info(t.hide_cursor, .{});
+        // log.info(t.clear_screen, .{});
 
         var regions = std.ArrayList(Region).init(allocator);
         var all_points = VectorSet(2, usize).init(allocator);
 
         for (0..self.buffer.len) |y| {
             for (0..self.buffer[0].len) |x| {
+                if (self.buffer[y][x] == ' ') continue;
                 try all_points.insert(.{ x, y });
             }
         }
@@ -214,23 +225,59 @@ const GardenMap = struct {
                 }
             }
 
-            var processed_per_pos = VectorSet(2, isize).init(allocator);
-            var per_pos_it = perimeter_positions.iterator();
-            var sides: usize = 0;
-            while (per_pos_it.next()) |pos| {
-                // var other_it = perimeter_positions.iterator();
-                if (processed_per_pos.contains(pos.*)) continue;
-                try processed_per_pos.insert(pos.*);
-                // while (other_it.next()) |other_pos| {
-                //     if (@reduce(.And, other_pos.* == pos.*)) continue;
-                //     const diff = pos.* - other_pos.*;
-                //     log.info("{d} - {d} == {d}", .{ pos.*, other_pos.*, diff });
-                // }
-                sides += 1;
+            var visited = VectorSet(3, isize).init(allocator);
+            var perimeter_dir_positions = VectorSet(3, isize).init(allocator);
+            var perimeter_pos_it = perimeter_positions.iterator();
+            while (perimeter_pos_it.next()) |p| {
+                inline for (std.meta.fields(Dir)) |d| {
+                    const tile = p.* + @as(Dir, @enumFromInt(d.value)).toVec();
+                    if (tile[0] > 0 and tile[1] > 0 and region.tiles.contains(@intCast(tile))) {
+                        try perimeter_dir_positions.insert(@Vector(3, isize){ p[0], p[1], d.value });
+                    }
+                }
             }
+            var perimeter_dir_pos_it = perimeter_dir_positions.iterator();
+
+            var sides: usize = 0;
+
+            self.cleanSidesMap();
+            while (perimeter_dir_pos_it.next()) |curr| {
+                if (visited.contains(curr.*)) continue;
+                sides += 1;
+
+                var nq = std.ArrayList(@Vector(3, isize)).init(allocator);
+                try nq.append(curr.*);
+                defer nq.deinit();
+
+                while (nq.items.len > 0) {
+                    const next_n = nq.pop();
+                    if (visited.contains(next_n)) continue;
+
+                    // self.sides[@intCast(next_n[1])][@intCast(next_n[0])] = 'X';
+                    // std.debug.print("\nSides: {d}", .{sides});
+                    // self.printSidesMap();
+                    // aoc.blockAskForNext();
+
+                    try visited.insert(next_n);
+                    const neighbours = [_]@Vector(3, isize){
+                        @as(@Vector(3, isize), @intCast(next_n)) +| @Vector(3, isize){ -1, 0, 0 },
+                        @as(@Vector(3, isize), @intCast(next_n)) +| @Vector(3, isize){ 0, -1, 0 },
+                        @as(@Vector(3, isize), @intCast(next_n)) +| @Vector(3, isize){ 1, 0, 0 },
+                        @as(@Vector(3, isize), @intCast(next_n)) +| @Vector(3, isize){ 0, 1, 0 },
+                    };
+                    for (0..neighbours.len) |i| {
+                        const n = neighbours[i];
+                        if (perimeter_dir_positions.contains(n) and
+                            (n[0] == curr[0] or n[1] == curr[1]))
+                        {
+                            try nq.append(n);
+                        }
+                    }
+                }
+            }
+
             region.sides = sides;
-            log.info("{any}", .{region});
-            aoc.blockAskForNext();
+            // log.info("# Sides: {d}", .{region.sides});
 
             var tile_it = region.tiles.iterator();
             while (tile_it.next()) |tile| {
@@ -240,6 +287,23 @@ const GardenMap = struct {
         }
 
         return regions.items;
+    }
+
+    pub fn cleanSidesMap(self: *GardenMap) void {
+        for (0..self.cols) |x| {
+            for (0..self.rows) |y| {
+                self.sides[x][y] = ' ';
+            }
+        }
+    }
+
+    pub fn printSidesMap(self: *GardenMap) void {
+        for (0..self.cols) |x| {
+            log.info("\n ", .{});
+            for (0..self.rows) |y| {
+                log.info("{c} ", .{self.sides[x][y]});
+            }
+        }
     }
 
     pub fn format(self: GardenMap, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
@@ -283,7 +347,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
     var total_prize: usize = 0;
     for (0..regions.len) |i| {
-        log.info("{any}", .{regions[i]});
+        // log.info("{any}", .{regions[i]});
         const region_price = try regions[i].calculatePriceWithPerimeter();
         total_prize += region_price;
     }
@@ -296,7 +360,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     var total_prize: usize = 0;
     for (0..regions.len) |i| {
-        log.info("{any}", .{regions[i]});
+        // log.info("{any}", .{regions[i]});
         const region_price = try regions[i].calculatePriceWithSides();
         total_prize += region_price;
     }
@@ -308,6 +372,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
-    try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }
