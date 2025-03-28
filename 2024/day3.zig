@@ -37,7 +37,7 @@ fn parseInput(allocator: Allocator, input: []const u8, conditionals: bool) !@Vec
             if (!std.mem.containsAtLeast(u8, cleaned[idx_front + 4 ..], 1, ")")) continue;
             if (std.mem.indexOf(u8, cleaned[idx_front + 4 ..], ")")) |idx_end| {
                 const instr = cleaned[idx_front .. idx_front + 4 + idx_end + 1];
-                var split_it = std.mem.split(u8, instr[start.len .. instr.len - 1], ",");
+                var split_it = std.mem.splitSequence(u8, instr[start.len .. instr.len - 1], ",");
                 const a = split_it.next() orelse continue;
                 const b = split_it.next() orelse continue;
                 const clean_a = std.mem.trim(u8, a, " ");

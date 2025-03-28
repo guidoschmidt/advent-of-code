@@ -45,7 +45,7 @@ const Map = struct {
 
 fn parseInput(allocator: Allocator, input: []const u8, start: u8) !ParseResult {
     const cleaned_input = std.mem.trimRight(u8, input, "\n");
-    var row_it = std.mem.split(u8, cleaned_input, "\n");
+    var row_it = std.mem.splitSequence(u8, cleaned_input, "\n");
 
     var row_count: usize = 0;
     const col_count: usize = row_it.peek().?.len;
@@ -138,7 +138,7 @@ fn checkDiag(map: *Map, pos: @Vector(2, isize)) bool {
     if ((std.mem.eql(u8, &word_a, &search) or
         std.mem.eql(u8, &word_a, &search_reversed)) and
         (std.mem.eql(u8, &word_b, &search) or
-        std.mem.eql(u8, &word_b, &search_reversed)))
+            std.mem.eql(u8, &word_b, &search_reversed)))
     {
         for ([_]@Vector(2, isize){ .{ 0, 0 }, .{ -1, 1 }, .{ 1, -1 }, .{ 1, 1 }, .{ -1, -1 } }) |offset| {
             map.set(pos + offset, map.get(pos + offset));
@@ -188,7 +188,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var mas_count: usize = 0;
 
     while (candidates.items.len > 0) {
-        const next = candidates.pop();
+        const next = candidates.pop().?;
         mas_count += if (checkDiag(&map, next)) 1 else 0;
     }
 

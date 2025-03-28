@@ -202,7 +202,7 @@ const Pattern = struct {
 };
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.split(u8, input, "\n");
+    var row_it = std.mem.splitSequence(u8, input, "\n");
     var pattern_list = std.ArrayList(Pattern).init(allocator);
 
     var current_pattern_data = std.ArrayList(u8).init(allocator);
@@ -239,7 +239,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.split(u8, input, "\n");
+    var row_it = std.mem.splitSequence(u8, input, "\n");
     var pattern_list = std.ArrayList(Pattern).init(allocator);
 
     var current_pattern_data = std.ArrayList(u8).init(allocator);

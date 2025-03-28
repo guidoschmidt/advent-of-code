@@ -148,7 +148,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var sum: u128 = 0;
 
     while (row_it.next()) |row| {
-        var entry_it = std.mem.split(u8, row, " ");
+        var entry_it = std.mem.splitSequence(u8, row, " ");
         const springs = entry_it.next().?;
 
         const groups_str = entry_it.next().?;
@@ -171,7 +171,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var sum: usize = 0;
 
     while (row_it.next()) |row| {
-        var entry_it = std.mem.split(u8, row, " ");
+        var entry_it = std.mem.splitSequence(u8, row, " ");
         const springs = entry_it.next().?;
 
         const groups_str = entry_it.next().?;

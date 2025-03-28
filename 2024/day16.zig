@@ -122,7 +122,7 @@ const Maze = struct {
                 }
             }.f);
 
-            const pos = stack.pop();
+            const pos = stack.pop().?;
             const x: usize = pos[0];
             const y: usize = pos[1];
             const dir: usize = pos[2];

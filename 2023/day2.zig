@@ -6,7 +6,6 @@ const Allocator = std.mem.Allocator;
 // pub fn main() !void {
 // }
 
-
 pub fn part1(_: Allocator, input: []const u8) anyerror!void {
     const max_red = 12;
     const max_green = 13;
@@ -15,8 +14,8 @@ pub fn part1(_: Allocator, input: []const u8) anyerror!void {
     var it = std.mem.tokenize(u8, input, "\n");
     var result: u32 = 0;
     var sum_of_powers: u32 = 0;
-    game: while(it.next()) |v| {
-        var line_it = std.mem.split(u8, v, ":");
+    game: while (it.next()) |v| {
+        var line_it = std.mem.splitSequence(u8, v, ":");
         const game_id_str = line_it.next().?;
         var id_str_it = std.mem.tokenize(u8, game_id_str, " ");
         _ = id_str_it.next();
@@ -28,16 +27,17 @@ pub fn part1(_: Allocator, input: []const u8) anyerror!void {
 
         const config = line_it.next().?;
         var set_it = std.mem.tokenize(u8, config, ";");
-        while(set_it.next()) |set| {
+        while (set_it.next()) |set| {
             var cube_it = std.mem.tokenize(u8, set, ",");
-            while(cube_it.next()) |cube| {
+            while (cube_it.next()) |cube| {
                 var digit_color_it = std.mem.tokenize(u8, cube, " ");
                 const digit_str = digit_color_it.next().?;
                 const color = digit_color_it.next().?;
                 const digit = try std.fmt.parseInt(u16, digit_str, 10);
                 if ((std.mem.eql(u8, color, "red") and digit > max_red) or
                     (std.mem.eql(u8, color, "green") and digit > max_green) or
-                    (std.mem.eql(u8, color, "blue") and digit > max_blue)) {
+                    (std.mem.eql(u8, color, "blue") and digit > max_blue))
+                {
                     // std.debug.print("\n→ {d} IMPOSSIBLE due to {s} {d}\n   {s}", .{
                     //     game_id, color, digit, config
                     // });
@@ -69,8 +69,8 @@ pub fn part2(_: Allocator, input: []const u8) anyerror!void {
     var result: u32 = 0;
     var sum_of_powers: u32 = 0;
     // game:
-    while(it.next()) |v| {
-        var line_it = std.mem.split(u8, v, ":");
+    while (it.next()) |v| {
+        var line_it = std.mem.splitSequence(u8, v, ":");
         const game_id_str = line_it.next().?;
         var id_str_it = std.mem.tokenize(u8, game_id_str, " ");
         _ = id_str_it.next();
@@ -82,9 +82,9 @@ pub fn part2(_: Allocator, input: []const u8) anyerror!void {
 
         const config = line_it.next().?;
         var set_it = std.mem.tokenize(u8, config, ";");
-        while(set_it.next()) |set| {
+        while (set_it.next()) |set| {
             var cube_it = std.mem.tokenize(u8, set, ",");
-            while(cube_it.next()) |cube| {
+            while (cube_it.next()) |cube| {
                 var digit_color_it = std.mem.tokenize(u8, cube, " ");
                 const digit_str = digit_color_it.next().?;
                 const color = digit_color_it.next().?;
@@ -117,7 +117,6 @@ pub fn part2(_: Allocator, input: []const u8) anyerror!void {
     std.debug.print("\n\n------------", .{});
     std.debug.print("\nResult: {d}\nSum of powers: {d}", .{ result, sum_of_powers });
 }
-
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

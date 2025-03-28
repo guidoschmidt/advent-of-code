@@ -11,7 +11,7 @@ const ParseResult = struct {
 };
 
 fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
-    var row_it = std.mem.split(u8, input, "\n");
+    var row_it = std.mem.splitSequence(u8, input, "\n");
     var row_count: usize = 0;
     while (row_it.next()) |row| {
         if (row.len == 0) break;
@@ -26,7 +26,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
     while (row_it.next()) |row| : (idx += 1) {
         if (row.len == 0) break;
         // log.info("Row: {s}", .{row});
-        var it = std.mem.split(u8, row, " ");
+        var it = std.mem.splitSequence(u8, row, " ");
         var lstr = it.next().?;
         var rstr = it.next().?;
         while (it.next()) |n| {

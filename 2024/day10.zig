@@ -125,7 +125,7 @@ const TrailMap = struct {
 
     pub fn solve(self: *TrailMap) !usize {
         while (self.trails.items.len > 0) {
-            var next = self.trails.pop();
+            var next = self.trails.pop().?;
             try self.progress(&next);
         }
         const result: usize = @reduce(.Add, self.result_vector);
@@ -168,7 +168,7 @@ const TrailMap = struct {
 
 fn parseInput(allocator: Allocator, input: []const u8) !TrailMap {
     const trimmed = std.mem.trimRight(u8, input, "\n");
-    var row_it = std.mem.split(u8, trimmed, "\n");
+    var row_it = std.mem.splitSequence(u8, trimmed, "\n");
 
     var map = TrailMap{};
     try map.init(allocator, &row_it);

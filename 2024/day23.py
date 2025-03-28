@@ -1,45 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import networkx as nx
+
 
 def parseInput():
-    """Parse input and find triples where any name starts with 't'."""
-    computers = set()
+    """Parse input and store nodes and links."""
+    nodes = set()
     links = {}
-    with open("./2024/input/examples/day23.txt") as input_file:
+    with open("./2024/input/day23.txt") as input_file:
         for line in input_file:
-            a = line[0:2]
-            b = line[3:-1]
-            print(f"{a}-{b}")
-            computers.add(a)
-            computers.add(b)
+            row = []
+            a, b = line.rstrip().split("-")
+            nodes.add(a)
+            nodes.add(b)
             if a in links:
                 links[a].append(b)
             else:
                 links[a] = [b]
-            if b in links:
-                links[b].append(a)
-            else:
-                links[b] = [a]
+        input_file.close()
 
-    print(computers)
-    for l in links:
-        print(l)
-        print(links[l])
+        for u in links:
+                print(f"[{u}]: {links[u]}")
 
-    triples = set()
+        g = nx.Graph()
+        for u in links:
+                for v in links[u]:
+                        g.add_edge(u, v)
 
-    for a in computers:
-        for al in links[a]:
-            for bl in links[al]:
-                if bl in links[a]:
-                    names = sorted([a, al, bl])
-                    if names[0][0] == "t" or \
-                       names[1][0] == "t" or \
-                       names[2][0] == "t":
-                        triples.add(",".join(names))
-
-    print(f"Result: {len(triples)}")
+        print("Cliques:")
+        cliques = nx.find_cliques(g)
+        result = sorted(cliques, key=len)[-1]
+        print(",".join(sorted(result)))
 
 
 if __name__ == '__main__':
-    parseInput()
+        parseInput()

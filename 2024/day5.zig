@@ -51,7 +51,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var center_values: @Vector(1000, usize) = @splat(0);
     var i: usize = 0;
     while (parsed.updates.items.len > 0) : (i += 1) {
-        const next = parsed.updates.pop();
+        const next = parsed.updates.pop().?;
 
         // log.info("ROW: {any}", .{next});
         var valid = true;
@@ -119,7 +119,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var center_values: @Vector(1000, usize) = @splat(0);
     var i: usize = 0;
     while (parsed.updates.items.len > 0) : (i += 1) {
-        const next = parsed.updates.pop();
+        const next = parsed.updates.pop().?;
 
         const valid = isValid(next, &parsed.ordering_rules);
         if (!valid) {

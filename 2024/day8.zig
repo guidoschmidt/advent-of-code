@@ -96,8 +96,8 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     while (map.antenna_positions.items.len > 0) {
         const a = map.antenna_positions.pop();
         for (antennas.items) |b| {
-            if (a[0] == b[0])
-                try antenna_pairs.append(AntennaPair{ .a = a, .b = b });
+            if (a.?[0] == b[0])
+                try antenna_pairs.append(AntennaPair{ .a = a.?, .b = b });
         }
     }
 
@@ -173,8 +173,8 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     while (map.antenna_positions.items.len > 0) {
         const a = map.antenna_positions.pop();
         for (antennas.items) |b| {
-            if (a[0] == b[0])
-                try antenna_pairs.append(AntennaPair{ .a = a, .b = b });
+            if (a.?[0] == b[0])
+                try antenna_pairs.append(AntennaPair{ .a = a.?, .b = b });
         }
     }
 

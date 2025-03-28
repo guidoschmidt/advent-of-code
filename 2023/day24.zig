@@ -14,10 +14,9 @@ fn matchingSign(num1: f64, num2: f64) bool {
     return true;
 }
 
-pub fn calculateIntersection(x1: f64, y1: f64, x2: f64, y2: f64,
-                             x3: f64, y3: f64, x4: f64, y4: f64) @Vector(3, f64) {
+pub fn calculateIntersection(x1: f64, y1: f64, x2: f64, y2: f64, x3: f64, y3: f64, x4: f64, y4: f64) @Vector(3, f64) {
     var intersection = @Vector(3, f64){ 0, 0, 0 };
-    const x_numer = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1-x2) * (x3 * y4 - y3 * x4);
+    const x_numer = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
     const y_numer = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
     const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 
@@ -30,19 +29,14 @@ const Hailstone = struct {
     position: @Vector(3, f64),
     velocity: @Vector(3, f64),
 
-    pub fn format(self: Hailstone,
-                  comptime fmt: []const u8,
-                  options: std.fmt.FormatOptions,
-                  writer: anytype) !void {
+    pub fn format(self: Hailstone, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        try writer.print("× [{d: >3}, {d: >3}, {d: >3}] → [{d: >3}, {d: >3}, {d: >3}]",
-                         .{ self.position[0], self.position[1], self.position[2],
-                            self.velocity[0], self.velocity[1], self.velocity[2] });
+        try writer.print("× [{d: >3}, {d: >3}, {d: >3}] → [{d: >3}, {d: >3}, {d: >3}]", .{ self.position[0], self.position[1], self.position[2], self.velocity[0], self.velocity[1], self.velocity[2] });
     }
 
     pub fn findEnd(self: Hailstone, range: f64) @Vector(3, f64) {
-        return self.position + self.velocity * @Vector(3, f64) { range, range, range };
+        return self.position + self.velocity * @Vector(3, f64){ range, range, range };
     }
 };
 
@@ -51,8 +45,8 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
 
     var hailstones = std.ArrayList(Hailstone).init(gpa);
 
-    while(row_it.next()) |row| {
-        var pos_vel_it = std.mem.split(u8, row, "@");
+    while (row_it.next()) |row| {
+        var pos_vel_it = std.mem.splitSequence(u8, row, "@");
         const pos_str = pos_vel_it.next().?;
         const vel_str = pos_vel_it.next().?;
 
@@ -62,15 +56,15 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
         var position: [3]f64 = undefined;
         var velocity: [3]f64 = undefined;
         var i: usize = 0;
-        while(i < 3) : (i += 1) {
-            const p_str =  std.mem.trim(u8, pos.next().?, " ");
+        while (i < 3) : (i += 1) {
+            const p_str = std.mem.trim(u8, pos.next().?, " ");
             const p_num = try std.fmt.parseFloat(f64, p_str);
-            const v_str =  std.mem.trim(u8, vel.next().?, " ");
+            const v_str = std.mem.trim(u8, vel.next().?, " ");
             const v_num = try std.fmt.parseFloat(f64, v_str);
             position[i] = p_num;
             velocity[i] = v_num;
         }
-        try hailstones.append(Hailstone {
+        try hailstones.append(Hailstone{
             .position = position,
             .velocity = velocity,
         });
@@ -116,12 +110,12 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
     // std.debug.print("\nB in past?: {any} : {any}", .{ b_in_past_x, b_in_past_y });
 
     const inf = std.math.inf(f64);
-    var intersections: u16  = 0;
-    for(0..hailstones.items.len) |idx_a| {
+    var intersections: u16 = 0;
+    for (0..hailstones.items.len) |idx_a| {
         var hailstone_a = hailstones.items[idx_a];
         const end_min_a = hailstone_a.findEnd(MIN);
         const end_max_a = hailstone_a.findEnd(MAX);
-        for(idx_a..hailstones.items.len) |idx_b| {
+        for (idx_a..hailstones.items.len) |idx_b| {
             if (idx_a == idx_b) continue;
 
             var hailstone_b = hailstones.items[idx_b];
@@ -133,14 +127,14 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
 
             const x2 = end_max_a[0];
             const y2 = end_max_a[1];
-            std.debug.print("\n{any}", .{ hailstone_a });
+            std.debug.print("\n{any}", .{hailstone_a});
             std.debug.print("\n    [{d}, {d}] --- [{d}, {d}]", .{ x1, y1, x2, y2 });
 
             const x3 = end_min_b[0];
             const y3 = end_min_b[1];
             const x4 = end_max_b[0];
             const y4 = end_max_b[1];
-            std.debug.print("\n{any}", .{ hailstone_b });
+            std.debug.print("\n{any}", .{hailstone_b});
             std.debug.print("\n    [{d}, {d}] --- [{d}, {d}]", .{ x3, y3, x4, y4 });
 
             const intersect = calculateIntersection(x1, y1, x2, y2, x3, y3, x4, y4);
@@ -158,7 +152,8 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
                 intersect[0] > MIN and intersect[0] < MAX and
                 intersect[1] > MIN and intersect[1] < MAX and
                 !(a_in_past_x or a_in_past_y) and
-                !(b_in_past_x or b_in_past_y)) {
+                !(b_in_past_x or b_in_past_y))
+            {
                 intersections += 1;
                 std.debug.print("\nINTERSECTION [{d:.3}, {d:.3}]", .{ intersect[0], intersect[1] });
             }
@@ -166,7 +161,7 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
             std.debug.print("\n\n", .{});
         }
     }
-    std.debug.print("\n\nFound {d} intersections\n", .{ intersections });
+    std.debug.print("\n\nFound {d} intersections\n", .{intersections});
 }
 
 fn part2(gpa: Allocator, input: []const u8) anyerror!void {
@@ -183,13 +178,12 @@ pub fn main() !void {
 }
 
 test "Basic line intersection" {
-    const line_a_start = @Vector(2, f64){0, 0};
-    const line_a_end = @Vector(2, f64){1, 1};
+    const line_a_start = @Vector(2, f64){ 0, 0 };
+    const line_a_end = @Vector(2, f64){ 1, 1 };
 
-    const line_b_start = @Vector(2, f64){1, 0};
-    const line_b_end = @Vector(2, f64){0, 1};
+    const line_b_start = @Vector(2, f64){ 1, 0 };
+    const line_b_end = @Vector(2, f64){ 0, 1 };
 
-    const res = calculateIntersection(line_a_start[0], line_a_start[1], line_a_end[0], line_a_end[1],
-                                    line_b_start[0], line_b_start[1], line_b_end[0], line_b_end[1]);
+    const res = calculateIntersection(line_a_start[0], line_a_start[1], line_a_end[0], line_a_end[1], line_b_start[0], line_b_start[1], line_b_end[0], line_b_end[1]);
     std.debug.print("\n{d:.2}, {d:.2}", .{ res[0], res[1] });
 }

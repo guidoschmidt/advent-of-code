@@ -118,8 +118,8 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     var count: usize = 0;
     var stones_it = stones_map.iterator();
-    for (0..75) |i| {
-        log.info("{d}", .{i});
+    for (0..75) |_| {
+        // log.info("{d}", .{i});
         const new = try applyWithMap(allocator, stones_map);
         stones_map.deinit();
         stones_map = new;

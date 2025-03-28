@@ -96,7 +96,7 @@ const MemorySpace = struct {
                 }
             }.f);
 
-            var current_cell = cell_list.pop();
+            var current_cell = cell_list.pop().?;
             self.current_cell = current_cell;
             self.buffer[current_cell.pos[1]][current_cell.pos[0]] = 'X';
 

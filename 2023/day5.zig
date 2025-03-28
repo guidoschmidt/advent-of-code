@@ -25,8 +25,7 @@ fn resolveChain(seed: u64, locations: *std.ArrayList(u64), maps: *Maps) !void {
     const temperature: u64 = resolve(&maps.light_to_temperature, light);
     const humidity: u64 = resolve(&maps.temperature_to_humidity, temperature);
     const location: u64 = resolve(&maps.humidity_to_location, humidity);
-    std.debug.print("\n>> Seed {d} → Soil {d} → Fert {d} → Water {d} → Light {d} → Temp {d} → Humid {d} → Location {d}",
-                    .{ seed, soil, fertilizer, water, light, temperature, humidity, location });
+    std.debug.print("\n>> Seed {d} → Soil {d} → Fert {d} → Water {d} → Light {d} → Temp {d} → Humid {d} → Location {d}", .{ seed, soil, fertilizer, water, light, temperature, humidity, location });
     try locations.append(location);
 }
 
@@ -59,11 +58,11 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
     // Seeds
     const seeds_part = parts_it.next().?;
-    var split = std.mem.split(u8, seeds_part, "seeds:");
+    var split = std.mem.splitSequence(u8, seeds_part, "seeds:");
     _ = split.next();
     var row_it = std.mem.tokenize(u8, split.next().?, " ");
     while (row_it.next()) |v| {
-        std.debug.print("\n{any}", .{ v });
+        std.debug.print("\n{any}", .{v});
         const number = std.fmt.parseInt(u64, v, 10) catch {
             continue;
         };
@@ -153,7 +152,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     }
 
     var locations = std.ArrayList(u64).init(allocator);
-    std.debug.print("\n{any}", .{ seeds_list });
+    std.debug.print("\n{any}", .{seeds_list});
     for (seeds_list.items) |seed| {
         const t = try std.Thread.spawn(.{}, resolveChain, .{ seed, &locations, &maps });
         t.join();
@@ -165,9 +164,8 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
             lowest = locations.items[i];
         }
     }
-    std.debug.print("\n\nResult:\n{d}", .{ lowest });
+    std.debug.print("\n\nResult:\n{d}", .{lowest});
 }
-
 
 const MapsPart2 = struct {
     seed_to_soil: std.AutoHashMap(Range, Range),
@@ -222,7 +220,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var seeds_list = std.ArrayList(u64).init(allocator);
     var seed_range_list = std.ArrayList(Range).init(allocator);
 
-    var maps = MapsPart2 {
+    var maps = MapsPart2{
         .seed_to_soil = std.AutoHashMap(Range, Range).init(allocator),
         .soil_to_fertilizer = std.AutoHashMap(Range, Range).init(allocator),
         .fertilizer_to_water = std.AutoHashMap(Range, Range).init(allocator),
@@ -236,18 +234,18 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     // Seeds
     const seeds_part = parts_it.next().?;
-    var split = std.mem.split(u8, seeds_part, "seeds:");
+    var split = std.mem.splitSequence(u8, seeds_part, "seeds:");
     _ = split.next();
     var row_it = std.mem.tokenize(u8, split.next().?, " ");
     while (row_it.next()) |v| {
-        std.debug.print("\n{any}", .{ v });
+        std.debug.print("\n{any}", .{v});
         const number = std.fmt.parseInt(u64, v, 10) catch {
             continue;
         };
         try seeds_list.append(number);
     }
     row_it.reset();
-    while(row_it.next()) |v| {
+    while (row_it.next()) |v| {
         const start = std.fmt.parseInt(u64, v, 10) catch {
             continue;
         };
@@ -301,7 +299,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     // Part 2
     std.debug.print("\n\n############ PART 2 ###############\n", .{});
     var results_part2 = std.ArrayList(u64).init(allocator);
-    for(seed_range_list.items) |seed_range| {
+    for (seed_range_list.items) |seed_range| {
         const t = try std.Thread.spawn(.{}, resolveLocationFromSeedRange, .{ seed_range, &results_part2, &maps });
         t.join();
     }
@@ -312,7 +310,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
         }
     }
 
-    std.debug.print("\n\nResult:\n{d}", .{ lowest_part2 });
+    std.debug.print("\n\nResult:\n{d}", .{lowest_part2});
 }
 
 pub fn main() !void {

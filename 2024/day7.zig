@@ -39,12 +39,12 @@ const Equation = struct {
 
 fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(Equation) {
     const clean = std.mem.trimRight(u8, input, "\n");
-    var row_it = std.mem.split(u8, clean, "\n");
+    var row_it = std.mem.splitSequence(u8, clean, "\n");
 
     var equations = std.ArrayList(Equation).init(allocator);
 
     while (row_it.next()) |row| {
-        var eq_it = std.mem.split(u8, row, " ");
+        var eq_it = std.mem.splitSequence(u8, row, " ");
 
         var number_count: usize = 0;
         while (eq_it.next()) |_| : (number_count += 1) {}

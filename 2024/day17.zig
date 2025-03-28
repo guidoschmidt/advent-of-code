@@ -58,7 +58,7 @@ const Machine = struct {
             try writer.print("{d},", .{p});
         }
         try writer.print("{s}\n", .{t.clear});
-        for (self.instr_ptr) |_| {
+        for (0..self.instr_ptr) |_| {
             try writer.print("  ", .{});
         }
         try writer.print("{s}↑ {s}", .{ t.red, t.clear });

@@ -6,8 +6,8 @@ const VectorSet = @import("./VectorSet.zig").VectorSet;
 const DAY: u8 = 12;
 const Allocator = std.mem.Allocator;
 const log = std.log;
-const rng_gen = std.rand.DefaultPrng;
-var rng: std.rand.Xoshiro256 = rng_gen.init(0);
+const rng_gen = std.Random.DefaultPrng;
+var rng: std.Random.Xoshiro256 = rng_gen.init(0);
 
 const Dir = enum(u3) {
     N,
@@ -112,7 +112,7 @@ const GardenMap = struct {
     pub fn init(allocator: Allocator, input: []const u8) !GardenMap {
         var instance = GardenMap{};
 
-        var row_it = std.mem.split(u8, input, "\n");
+        var row_it = std.mem.splitSequence(u8, input, "\n");
 
         instance.cols = row_it.peek().?.len + 2;
         instance.rows = 2;
@@ -192,7 +192,7 @@ const GardenMap = struct {
             try q.append(point.*);
 
             while (q.items.len > 0) {
-                const curr = q.pop();
+                const curr = q.pop().?;
                 if (region.tiles.contains(curr)) {
                     continue;
                 }
@@ -250,7 +250,7 @@ const GardenMap = struct {
                 defer nq.deinit();
 
                 while (nq.items.len > 0) {
-                    const next_n = nq.pop();
+                    const next_n = nq.pop().?;
                     if (visited.contains(next_n)) continue;
 
                     // self.sides[@intCast(next_n[1])][@intCast(next_n[0])] = 'X';

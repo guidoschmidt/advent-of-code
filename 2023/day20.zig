@@ -12,7 +12,7 @@ const Pulse = enum {
         _ = fmt;
         _ = options;
         switch (self) {
-            .LOW  => try writer.print("{c}", .{'L'}),
+            .LOW => try writer.print("{c}", .{'L'}),
             .HIGH => try writer.print("{c}", .{'H'}),
         }
     }
@@ -28,10 +28,10 @@ const NodeType = enum {
         _ = fmt;
         _ = options;
         switch (self) {
-            .FLIP_FLOP   => try writer.print("{s}", .{"FLFL"}),
+            .FLIP_FLOP => try writer.print("{s}", .{"FLFL"}),
             .CONJUNCTION => try writer.print("{s}", .{"CONJ"}),
-            .BROADCAST   => try writer.print("{s}", .{"BRDC"}),
-            .OTHER       => try writer.print("{s}", .{"OTHR"}),
+            .BROADCAST => try writer.print("{s}", .{"BRDC"}),
+            .OTHER => try writer.print("{s}", .{"OTHR"}),
         }
     }
 };
@@ -46,10 +46,10 @@ const NodeModule = union(NodeType) {
         _ = fmt;
         _ = options;
         switch (self) {
-            .FLIP_FLOP   => try writer.print("{any}", .{NodeType.FLIP_FLOP}),
+            .FLIP_FLOP => try writer.print("{any}", .{NodeType.FLIP_FLOP}),
             .CONJUNCTION => try writer.print("{any}", .{NodeType.CONJUNCTION}),
-            .BROADCAST   => try writer.print("{any}", .{NodeType.BROADCAST}),
-            .OTHER       => try writer.print("{any}", .{NodeType.OTHER}),
+            .BROADCAST => try writer.print("{any}", .{NodeType.BROADCAST}),
+            .OTHER => try writer.print("{any}", .{NodeType.OTHER}),
         }
     }
 };
@@ -72,14 +72,14 @@ const Node = struct {
         _ = options;
         try writer.print("\n{s} [{any}]", .{ self.name, self.module });
 
-        try writer.print("\n  IN: {d}", .{ self.inputs.items.len });
+        try writer.print("\n  IN: {d}", .{self.inputs.items.len});
         for (self.inputs.items) |in| {
-            try writer.print("\n   ← {s}", .{ in.*.name });
+            try writer.print("\n   ← {s}", .{in.*.name});
         }
 
-        try writer.print("\n  OUT: {d}", .{ self.outputs.items.len });
+        try writer.print("\n  OUT: {d}", .{self.outputs.items.len});
         for (self.outputs.items) |out| {
-            try writer.print("\n   → {s}", .{ out.*.name });
+            try writer.print("\n   → {s}", .{out.*.name});
         }
     }
 
@@ -110,15 +110,15 @@ const Node = struct {
     }
 
     pub fn process(self: *Node, in: Pulse, from_input: []const u8, transfers: *std.ArrayList(Transfer)) !void {
-        const out = switch(self.module) {
-            .BROADCAST   => self.processBroadcast(in),
-            .FLIP_FLOP   => |ff_state| self.processFlipFlop(in, ff_state),
+        const out = switch (self.module) {
+            .BROADCAST => self.processBroadcast(in),
+            .FLIP_FLOP => |ff_state| self.processFlipFlop(in, ff_state),
             .CONJUNCTION => self.processConjunction(in, from_input),
-            .OTHER       => null,
+            .OTHER => null,
         };
         self.state = out;
         if (out != null) {
-            for(self.outputs.items) |output| {
+            for (self.outputs.items) |output| {
                 try transfers.append(Transfer{
                     .from = self.name,
                     .pulse = out.?,
@@ -136,11 +136,11 @@ const Node = struct {
     fn processFlipFlop(self: *Node, in: Pulse, ff_state: bool) ?Pulse {
         if (in == .HIGH) return null;
         var send_pulse: Pulse = .LOW;
-        if(ff_state == false) {
+        if (ff_state == false) {
             self.module.FLIP_FLOP = true;
             send_pulse = .HIGH;
         }
-        if(ff_state == true) {
+        if (ff_state == true) {
             self.module.FLIP_FLOP = false;
         }
 
@@ -160,7 +160,9 @@ const Node = struct {
                 high_pulse_count += 1;
         }
         const send_pulse: Pulse = if (high_pulse_count == self.module.CONJUNCTION.count())
-            .LOW else .HIGH;
+            .LOW
+        else
+            .HIGH;
 
         return send_pulse;
     }
@@ -173,26 +175,23 @@ const SystemState = struct {
     high_pulses_sent: u64 = 0,
     final_output_modules: ?std.ArrayList(u64) = undefined,
 
-    pub fn format(self: SystemState,
-                  comptime fmt: []const u8,
-                  options: std.fmt.FormatOptions,
-                  writer: anytype) !void {
+    pub fn format(self: SystemState, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
         try writer.print("\n--- SYSTEM STATE ---", .{});
-        try writer.print("\n LOW  pulses sent: {d}", .{ self.low_pulses_sent });
-        try writer.print("\n HIGH pulses sent: {d}", .{ self.high_pulses_sent });
+        try writer.print("\n LOW  pulses sent: {d}", .{self.low_pulses_sent});
+        try writer.print("\n HIGH pulses sent: {d}", .{self.high_pulses_sent});
         var module_it = self.module_dict.keyIterator();
         while (module_it.next()) |module_name| {
             const module = self.module_dict.get(module_name.*);
-            try writer.print("\n{any}", .{ module });
+            try writer.print("\n{any}", .{module});
         }
     }
 
     pub fn pressButton(self: *SystemState, i: usize) !bool {
         var broadcaster = self.module_dict.get("broadcaster").?;
 
-        const start = Transfer {
+        const start = Transfer{
             .from = "button",
             .to = &broadcaster,
             .pulse = .LOW,
@@ -206,7 +205,7 @@ const SystemState = struct {
             const next = transfers.orderedRemove(0);
 
             switch (next.pulse) {
-                .LOW  => self.low_pulses_sent += 1,
+                .LOW => self.low_pulses_sent += 1,
                 .HIGH => self.high_pulses_sent += 1,
             }
 
@@ -255,7 +254,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
     defer module_links.deinit();
 
     while (row_it.next()) |row| {
-        var entry_it = std.mem.split(u8, row, "->");
+        var entry_it = std.mem.splitSequence(u8, row, "->");
         var module_name = entry_it.next().?;
         module_name = std.mem.trim(u8, module_name, " ");
         const modifier_char: u8 = module_name[0];
@@ -293,7 +292,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
                 .inputs = std.ArrayList(*Node).init(allocator),
                 .outputs = std.ArrayList(*Node).init(allocator),
             },
-            .OTHER => Node {
+            .OTHER => Node{
                 .name = module_name,
                 .module = .{ .OTHER = true },
                 .inputs = std.ArrayList(*Node).init(allocator),
@@ -324,7 +323,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
                     found = true;
             }
             if (!found) {
-                const module = Node {
+                const module = Node{
                     .name = receiver_name,
                     .module = .{ .OTHER = true },
                     .inputs = std.ArrayList(*Node).init(allocator),
@@ -337,7 +336,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
 
     var module_it = module_dict.keyIterator();
     while (module_it.next()) |key| {
-        if(module_dict.getPtr(key.*)) |module| {
+        if (module_dict.getPtr(key.*)) |module| {
             if (module_links.get(key.*)) |outputs| {
                 for (outputs.items) |output| {
                     if (module_dict.getPtr(output)) |output_module| {
@@ -355,29 +354,29 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var system = SystemState {
+    var system = SystemState{
         .allocator = allocator,
         .module_dict = try parseInput(allocator, input),
     };
-    std.debug.print("\n{any}", .{ system });
+    std.debug.print("\n{any}", .{system});
 
     for (0..1000) |i| {
-        std.debug.print("\n\n###### Button Press {d}", .{ i });
+        std.debug.print("\n\n###### Button Press {d}", .{i});
         _ = try system.pressButton(i);
     }
-    std.debug.print("\n{any}", .{ system });
-    std.debug.print("\n\nResult: {d}", .{ system.high_pulses_sent * system.low_pulses_sent });
+    std.debug.print("\n{any}", .{system});
+    std.debug.print("\n\nResult: {d}", .{system.high_pulses_sent * system.low_pulses_sent});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    var system = SystemState {
+    var system = SystemState{
         .allocator = allocator,
         .module_dict = try parseInput(allocator, input),
         .final_output_modules = std.ArrayList(u64).init(allocator),
     };
 
     if (system.module_dict.get("rx")) |rx_module| {
-        std.debug.print("\n{any}:", .{ rx_module });
+        std.debug.print("\n{any}:", .{rx_module});
         if (system.module_dict.get("th")) |th_module| {
             for (th_module.inputs.items) |th_input| {
                 std.debug.print("\n   → {s} [{any}]", .{ th_input.name, th_input.module });
@@ -387,12 +386,12 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     var i: usize = 0;
     while (true) : (i += 1) {
-        std.debug.print("\n\n###### Button Press {d}", .{ i });
+        std.debug.print("\n\n###### Button Press {d}", .{i});
         if (try system.pressButton(i)) break;
     }
     const solution = math.lcm(u64, system.final_output_modules.?.items);
-    std.debug.print("\n{any}", .{ system });
-    std.debug.print("\n\nResult: {d}", .{ solution });
+    std.debug.print("\n{any}", .{system});
+    std.debug.print("\n\nResult: {d}", .{solution});
 }
 
 pub fn main() !void {

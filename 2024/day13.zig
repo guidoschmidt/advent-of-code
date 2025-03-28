@@ -18,9 +18,10 @@ const Machine = struct {
         var minimized_tokens: usize = Machine.tokenize(limit, limit);
         const vec_type = @TypeOf(self.a);
         var foundSolution: bool = false;
-        while (a <= limit) : (a += 1) {
+        const step: usize = 1;
+        while (a <= limit) : (a += step) {
             b = 1;
-            while (b <= limit) : (b += 1) {
+            while (b <= limit) : (b += step) {
                 const evaluation = @as(vec_type, @splat(a)) * self.a + @as(vec_type, @splat(b)) * self.b;
                 const solution = @reduce(.And, evaluation == self.prize);
                 if (solution) {
@@ -95,7 +96,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(Machine) {
                 try std.fmt.parseInt(usize, prize_it.next().?, 10),
             },
         };
-        log.info("{any}", .{machine});
+        // log.info("{any}", .{machine});
         try machines.append(machine);
     }
 
@@ -113,8 +114,31 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    // Actually it's just a matter of solving a linear equation:
+    // https://www.reddit.com/r/adventofcode/comments/1hdlc1k/2024_day_13_part_2_anyone_else_just_didnt_find
+    const machines = try parseInput(allocator, input);
+    var result: isize = 0;
+    for (machines.items) |*machine| {
+        const a: @Vector(2, f64) = @floatFromInt(machine.a);
+        const b: @Vector(2, f64) = @floatFromInt(machine.b);
+        var prize: @Vector(2, f64) = @floatFromInt(machine.prize);
+        prize[0] += 10000000000000;
+        prize[1] += 10000000000000;
+
+        const times_b = (prize[1] * a[0] - prize[0] * a[1]) / (b[1] * a[0] - b[0] * a[1]);
+        const times_a = (prize[0] - b[0] * times_b) / a[0];
+
+        // std.log.info("{d}, {d}, {d}", .{ a, b, prize });
+        // std.log.info("{d} [{any}]", .{ times_b, @mod(times_b, 1) });
+        // std.log.info("{d} [{any}]", .{ times_a, @mod(times_a, 1) });
+
+        if (@mod(times_a, 1) == 0.0 and @mod(times_b, 1) == 0.0) {
+            result +=
+                @as(isize, @intFromFloat(@trunc(times_a))) * 3 +
+                @as(isize, @intFromFloat(@trunc(times_b)));
+        }
+    }
+    std.debug.print("\nResult: {d}", .{result});
 }
 
 pub fn main() !void {
@@ -122,6 +146,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
-    try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
+    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part2);
 }

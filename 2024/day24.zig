@@ -1,5 +1,6 @@
 const std = @import("std");
 const aoc = @import("aoc");
+const t = @import("term");
 
 const DAY: u8 = 24;
 const Allocator = std.mem.Allocator;
@@ -60,7 +61,7 @@ const System = struct {
             if (output_wire_val != null) {
                 self.output_wire_values[i] = @intCast(output_wire_val.?);
             }
-            log.info("Value of {s}: {?}", .{ output_wire, output_wire_val });
+            // log.info("Value of {s}: {?}", .{ output_wire, output_wire_val });
             all_output_wires_set = all_output_wires_set and self.wire_values.get(output_wire) != null;
         }
 
@@ -94,6 +95,61 @@ const System = struct {
 
         // aoc.blockAskForNext();
         try self.run();
+    }
+
+    pub fn sortWires(self: System, allocator: Allocator) !void {
+        var wire_it = self.wires.iterator();
+        var x = std.ArrayList([]const u8).init(allocator);
+        var y = std.ArrayList([]const u8).init(allocator);
+        var z = std.ArrayList([]const u8).init(allocator);
+        while (wire_it.next()) |wire| {
+            if (wire.*[0] == 'x') try x.append(wire.*);
+            if (wire.*[0] == 'y') try y.append(wire.*);
+            if (wire.*[0] == 'z') try z.append(wire.*);
+        }
+
+        std.mem.sort([]const u8, x.items, {}, comptime struct {
+            pub fn f(_: void, a: []const u8, b: []const u8) bool {
+                return std.mem.order(u8, a, b) == .lt;
+            }
+        }.f);
+        std.mem.sort([]const u8, y.items, {}, comptime struct {
+            pub fn f(_: void, a: []const u8, b: []const u8) bool {
+                return std.mem.order(u8, a, b) == .lt;
+            }
+        }.f);
+        std.mem.sort([]const u8, z.items, {}, comptime struct {
+            pub fn f(_: void, a: []const u8, b: []const u8) bool {
+                return std.mem.order(u8, a, b) == .lt;
+            }
+        }.f);
+
+        std.debug.print("\n", .{});
+        for (x.items) |xn| {
+            std.debug.print("{s}{s}  {s}", .{ t.dark_gray, xn, t.clear });
+        }
+        std.debug.print("\n", .{});
+        for (x.items) |xn| {
+            std.debug.print("{d: >3}  ", .{self.wire_values.get(xn).?});
+        }
+
+        std.debug.print("\n", .{});
+        for (y.items) |yn| {
+            std.debug.print("{s}{s}  {s}", .{ t.dark_gray, yn, t.clear });
+        }
+        std.debug.print("\n", .{});
+        for (y.items) |yn| {
+            std.debug.print("{d: >3}  ", .{self.wire_values.get(yn).?});
+        }
+
+        std.debug.print("\n", .{});
+        for (z.items) |zn| {
+            std.debug.print("{s}{s}  {s}", .{ t.dark_gray, zn, t.clear });
+        }
+        std.debug.print("\n", .{});
+        for (z.items) |zn| {
+            std.debug.print("{any: >3}  ", .{self.wire_values.get(zn).?});
+        }
     }
 
     pub fn format(self: System, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
@@ -196,12 +252,12 @@ fn parseInput(allocator: Allocator, input: []const u8) !System {
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var system = try parseInput(allocator, input);
     try system.run();
-    // log.info("{any}", .{system});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = allocator;
-    _ = input;
+    var system = try parseInput(allocator, input);
+    try system.run();
+    try system.sortWires(allocator);
 }
 
 pub fn main() !void {
@@ -209,6 +265,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
+    // try aoc.runPart(allocator, 2024, DAY, .PUZZLE, part1);
     try aoc.runPart(allocator, 2024, DAY, .EXAMPLE, part2);
 }

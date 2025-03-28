@@ -27,7 +27,7 @@ fn cardValueFromLetter(c: u8) u8 {
         'Q' => 12,
         'J' => 11,
         'T' => 10,
-        else => std.fmt.charToDigit(c, 10) catch 0 
+        else => std.fmt.charToDigit(c, 10) catch 0,
     };
 }
 
@@ -48,7 +48,7 @@ fn calculateRankTypePart2(allocator: Allocator, hand: *const [5]u8) !Rating {
     // try uniques.put(hand[0], 1);
     for (0..hand.len) |i| {
         if (hand[i] == 'J') {
-            joker_count+=1;
+            joker_count += 1;
             continue;
         }
         if (uniques.contains(hand[i])) {
@@ -63,7 +63,7 @@ fn calculateRankTypePart2(allocator: Allocator, hand: *const [5]u8) !Rating {
     if (joker_count > 0 and uniques.count() > 0) {
         var key_it = uniques.keyIterator();
         var most_cards_key: u8 = key_it.next().?.*;
-        while(key_it.next())|k| {
+        while (key_it.next()) |k| {
             const count = uniques.get(k.*).?;
             const count_highest_card = uniques.get(most_cards_key).?;
             if (count == count_highest_card and
@@ -72,8 +72,8 @@ fn calculateRankTypePart2(allocator: Allocator, hand: *const [5]u8) !Rating {
             if (count > count_highest_card)
                 most_cards_key = k.*;
         }
-        std.debug.print("\n--- {s}", .{ hand });
-        std.debug.print("\n{d} JOKER!", .{ joker_count });
+        std.debug.print("\n--- {s}", .{hand});
+        std.debug.print("\n{d} JOKER!", .{joker_count});
         std.debug.print("\nMost cards {c}: {d}", .{ most_cards_key, uniques.get(most_cards_key).? });
         uniques.getPtr(most_cards_key).?.* += joker_count;
     }
@@ -164,9 +164,9 @@ fn calculateRankType(allocator: Allocator, hand: *const [5]u8) !Rating {
     return rating;
 }
 
-fn secondOrderingRule(hand_a: []const u8, hand_b: []const u8, comptime value_fn: fn(u8) u8) bool {
+fn secondOrderingRule(hand_a: []const u8, hand_b: []const u8, comptime value_fn: fn (u8) u8) bool {
     var hand_a_wins = false;
-    for(hand_a, hand_b) |a,b| {
+    for (hand_a, hand_b) |a, b| {
         const val_a = value_fn(a);
         const val_b = value_fn(b);
         // std.debug.print("\n{c} {c}: {d} < {d}", .{ a, b, val_a, val_b });
@@ -181,7 +181,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var cards = std.ArrayList(Card).init(allocator);
     var row_it = std.mem.tokenize(u8, input, "\n");
     while (row_it.next()) |row| {
-        var entry_it = std.mem.split(u8, row, " ");
+        var entry_it = std.mem.splitSequence(u8, row, " ");
         const hand = entry_it.next().?;
         const rating = calculateRankType(allocator, @ptrCast(hand.ptr)) catch Rating.NONE;
         const bid_str = entry_it.next().?;
@@ -201,19 +201,19 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     }.f);
     var result: u64 = 0;
     var idx: u32 = 1;
-    for(cards.items) |c| {
+    for (cards.items) |c| {
         std.debug.print("\n[{s}] → {any} {d:>10} * {d}", .{ c.hand, c.rating, c.bid, idx });
         result += c.bid * idx;
         idx += 1;
     }
-    std.debug.print("\n{d}", .{ result });
+    std.debug.print("\n{d}", .{result});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var cards = std.ArrayList(Card).init(allocator);
     var row_it = std.mem.tokenize(u8, input, "\n");
     while (row_it.next()) |row| {
-        var entry_it = std.mem.split(u8, row, " ");
+        var entry_it = std.mem.splitSequence(u8, row, " ");
         const hand = entry_it.next().?;
         const rating = calculateRankTypePart2(allocator, @ptrCast(hand.ptr)) catch Rating.NONE;
         const bid_str = entry_it.next().?;
@@ -233,12 +233,12 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     }.f);
     var result: u64 = 0;
     var idx: u32 = 1;
-    for(cards.items) |c| {
+    for (cards.items) |c| {
         std.debug.print("\n[{s}] → {any} {d:>10} * {d}", .{ c.hand, c.rating, c.bid, idx });
         result += c.bid * idx;
         idx += 1;
     }
-    std.debug.print("\n{d}", .{ result });
+    std.debug.print("\n{d}", .{result});
 }
 
 pub fn main() !void {

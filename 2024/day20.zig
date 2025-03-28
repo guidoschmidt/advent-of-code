@@ -233,7 +233,7 @@ const Racetrack = struct {
         self.track = std.ArrayList(@Vector(2, usize)).init(allocator);
 
         while (pos_list.items.len > 0) {
-            const current = pos_list.pop();
+            const current = pos_list.pop().?;
 
             if (!(@reduce(.And, current == self.start) or @reduce(.And, current == self.end))) {
                 self.buffer[current[1]][current[0]] = 'X';
