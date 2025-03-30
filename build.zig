@@ -9,36 +9,9 @@ const BuildTargetResults = struct {
     tests: *std.Build.Step.Compile,
 };
 
-fn fetchPuzzleInput(allocator: std.mem.Allocator, year: u16, day: usize) !void {
-    var buf: [128]u8 = undefined;
-    const file_path = try std.fmt.bufPrint(&buf, "./aoc/input/{d}/day{d}.txt", .{ year, day });
-    _ = fs.cwd().openFile(file_path, .{}) catch |err| {
-        if (err == std.fs.File.OpenError.FileNotFound) {
-            try aoc_input.getPuzzleInputFromServer(allocator, year, day, file_path);
-        }
-    };
-
-    // Create examples input txt files, if not existing
-    const example_file_path = try std.fmt.bufPrint(&buf, "./aoc/input/{d}/examples/day{d}.txt", .{ year, day });
-    if (std.fs.path.dirname(example_file_path)) |basepath| {
-        fs.cwd().makeDir(basepath) catch {
-            std.debug.print("\n{s} already exists. Continue...", .{basepath});
-        };
-        _ = std.fs.cwd().openFile(example_file_path, .{}) catch |err| {
-            if (err == std.fs.File.OpenError.FileNotFound) {
-                _ = std.fs.cwd().createFile(example_file_path, .{}) catch {
-                    std.debug.print("\n{s} already exists. Continue...", .{example_file_path});
-                };
-            }
-        };
-    }
-}
-
 fn createBuildTarget(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, aoc_module: *std.Build.Module, libs: *std.StringHashMap(*std.Build.Module), year: u16, day: usize) !BuildTargetResults {
     var src_buf: [32]u8 = undefined;
     const source_file = try std.fmt.bufPrint(&src_buf, "{d}/day{d}.zig", .{ year, day });
-
-    try fetchPuzzleInput(b.allocator, year, day);
 
     // Check if source file actually exists
     _ = std.fs.cwd().openFile(source_file, .{}) catch |err| {
