@@ -1,3 +1,5 @@
+[![CI](https://github.com/guidoschmidt/advent-of-code/actions/workflows/build.yml/badge.svg)](https://github.com/guidoschmidt/advent-of-code/actions/workflows/build.yml)
+
 # Advent Of Code 🎄 [zig](https://ziglang.org/) solutions
 
 1. Install [zig](https://ziglang.org/) ([.zigversion](./.zigversion)), preferably using [zvm](https://github.com/tristanisham/zvm)
