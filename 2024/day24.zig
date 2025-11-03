@@ -49,7 +49,7 @@ const System = struct {
     output_wires: [][]const u8,
     output_wire_values: []u8,
     wire_values: std.StringHashMap(u1),
-    gates: std.ArrayList(Gate),
+    gates: std.array_list.Managed(Gate),
 
     pub fn run(self: *System) !void {
         // log.info("{any}", .{self});
@@ -99,9 +99,9 @@ const System = struct {
 
     pub fn sortWires(self: System, allocator: Allocator) !void {
         var wire_it = self.wires.iterator();
-        var x = std.ArrayList([]const u8).init(allocator);
-        var y = std.ArrayList([]const u8).init(allocator);
-        var z = std.ArrayList([]const u8).init(allocator);
+        var x = std.array_list.Managed([]const u8).init(allocator);
+        var y = std.array_list.Managed([]const u8).init(allocator);
+        var z = std.array_list.Managed([]const u8).init(allocator);
         while (wire_it.next()) |wire| {
             if (wire.*[0] == 'x') try x.append(wire.*);
             if (wire.*[0] == 'y') try y.append(wire.*);
@@ -191,7 +191,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !System {
     }
 
     // Gates
-    var gates = std.ArrayList(Gate).init(allocator);
+    var gates = std.array_list.Managed(Gate).init(allocator);
 
     const gates_input = part_it.next().?;
     var gates_it = std.mem.splitSequence(u8, gates_input, "\n");

@@ -17,7 +17,7 @@ const Maps = struct {
     humidity_to_location: std.AutoHashMap(Range, MapRange),
 };
 
-fn resolveChain(seed: u64, locations: *std.ArrayList(u64), maps: *Maps) !void {
+fn resolveChain(seed: u64, locations: *std.array_list.Managed(u64), maps: *Maps) !void {
     const soil: u64 = resolve(&maps.seed_to_soil, seed);
     const fertilizer: u64 = resolve(&maps.soil_to_fertilizer, soil);
     const water: u64 = resolve(&maps.fertilizer_to_water, fertilizer);
@@ -42,7 +42,7 @@ fn resolve(map: *std.AutoHashMap(Range, MapRange), start_value: u64) u64 {
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var seeds_list = std.ArrayList(u64).init(allocator);
+    var seeds_list = std.array_list.Managed(u64).init(allocator);
 
     var maps = Maps{
         .seed_to_soil = std.AutoHashMap(Range, MapRange).init(allocator),
@@ -54,13 +54,13 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         .humidity_to_location = std.AutoHashMap(Range, MapRange).init(allocator),
     };
 
-    var parts_it = std.mem.tokenize(u8, input, "\n");
+    var parts_it = std.mem.tokenizeSequence(u8, input, "\n");
 
     // Seeds
     const seeds_part = parts_it.next().?;
     var split = std.mem.splitSequence(u8, seeds_part, "seeds:");
     _ = split.next();
-    var row_it = std.mem.tokenize(u8, split.next().?, " ");
+    var row_it = std.mem.tokenizeSequence(u8, split.next().?, " ");
     while (row_it.next()) |v| {
         std.debug.print("\n{any}", .{v});
         const number = std.fmt.parseInt(u64, v, 10) catch {
@@ -77,7 +77,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
             continue;
         }
 
-        row_it = std.mem.tokenize(u8, part, " ");
+        row_it = std.mem.tokenizeSequence(u8, part, " ");
 
         // Seed → Soil
         if (std.mem.eql(u8, current_map, "seed-to-soil map:")) {
@@ -151,7 +151,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         }
     }
 
-    var locations = std.ArrayList(u64).init(allocator);
+    var locations = std.array_list.Managed(u64).init(allocator);
     std.debug.print("\n{any}", .{seeds_list});
     for (seeds_list.items) |seed| {
         const t = try std.Thread.spawn(.{}, resolveChain, .{ seed, &locations, &maps });
@@ -177,7 +177,7 @@ const MapsPart2 = struct {
     humidity_to_location: std.AutoHashMap(Range, Range),
 };
 
-fn resolveLocationFromSeed(seed: u64, locations: *std.ArrayList(u64), maps: *MapsPart2) !void {
+fn resolveLocationFromSeed(seed: u64, locations: *std.array_list.Managed(u64), maps: *MapsPart2) !void {
     const soil: u64 = resolveDestination(maps.seed_to_soil, seed);
     const fertilizer: u64 = resolveDestination(maps.soil_to_fertilizer, soil);
     const water: u64 = resolveDestination(maps.fertilizer_to_water, fertilizer);
@@ -189,7 +189,7 @@ fn resolveLocationFromSeed(seed: u64, locations: *std.ArrayList(u64), maps: *Map
     try locations.append(location);
 }
 
-fn resolveLocationFromSeedRange(seed_range: Range, locations: *std.ArrayList(u64), maps: *MapsPart2) !void {
+fn resolveLocationFromSeedRange(seed_range: Range, locations: *std.array_list.Managed(u64), maps: *MapsPart2) !void {
     for (seed_range.start..seed_range.end) |seed| {
         try resolveLocationFromSeed(seed, locations, maps);
     }
@@ -207,7 +207,10 @@ fn resolveDestination(map: std.AutoHashMap(Range, Range), start_value: u64) u64 
     return result;
 }
 
-fn parseAndFillMap(row_it: *std.mem.TokenIterator(u8, .any), map: *std.AutoHashMap(Range, Range)) !void {
+fn parseAndFillMap(
+    row_it: *std.mem.TokenIterator(u8, .sequence),
+    map: *std.AutoHashMap(Range, Range),
+) !void {
     const dst_start = try std.fmt.parseInt(u64, row_it.next().?, 10);
     const src_range = try std.fmt.parseInt(u64, row_it.next().?, 10);
     const range_len = try std.fmt.parseInt(u64, row_it.next().?, 10);
@@ -217,8 +220,8 @@ fn parseAndFillMap(row_it: *std.mem.TokenIterator(u8, .any), map: *std.AutoHashM
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    var seeds_list = std.ArrayList(u64).init(allocator);
-    var seed_range_list = std.ArrayList(Range).init(allocator);
+    var seeds_list = std.array_list.Managed(u64).init(allocator);
+    var seed_range_list = std.array_list.Managed(Range).init(allocator);
 
     var maps = MapsPart2{
         .seed_to_soil = std.AutoHashMap(Range, Range).init(allocator),
@@ -230,13 +233,13 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
         .humidity_to_location = std.AutoHashMap(Range, Range).init(allocator),
     };
 
-    var parts_it = std.mem.tokenize(u8, input, "\n");
+    var parts_it = std.mem.tokenizeSequence(u8, input, "\n");
 
     // Seeds
     const seeds_part = parts_it.next().?;
     var split = std.mem.splitSequence(u8, seeds_part, "seeds:");
     _ = split.next();
-    var row_it = std.mem.tokenize(u8, split.next().?, " ");
+    var row_it = std.mem.tokenizeSequence(u8, split.next().?, " ");
     while (row_it.next()) |v| {
         std.debug.print("\n{any}", .{v});
         const number = std.fmt.parseInt(u64, v, 10) catch {
@@ -264,7 +267,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
             continue;
         }
 
-        row_it = std.mem.tokenize(u8, part, " ");
+        row_it = std.mem.tokenizeSequence(u8, part, " ");
 
         // Seed → Soil
         if (std.mem.eql(u8, current_map, "seed-to-soil map:")) {
@@ -298,7 +301,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     // Part 2
     std.debug.print("\n\n############ PART 2 ###############\n", .{});
-    var results_part2 = std.ArrayList(u64).init(allocator);
+    var results_part2 = std.array_list.Managed(u64).init(allocator);
     for (seed_range_list.items) |seed_range| {
         const t = try std.Thread.spawn(.{}, resolveLocationFromSeedRange, .{ seed_range, &results_part2, &maps });
         t.join();

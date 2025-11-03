@@ -170,7 +170,7 @@ const GardenMap = struct {
         // log.info(t.hide_cursor, .{});
         // log.info(t.clear_screen, .{});
 
-        var regions = std.ArrayList(Region).init(allocator);
+        var regions = std.array_list.Managed(Region).init(allocator);
         var all_points = VectorSet(2, usize).init(allocator);
 
         for (0..self.buffer.len) |y| {
@@ -187,7 +187,7 @@ const GardenMap = struct {
             var region = try Region.init(allocator, self.buffer[point[1]][point[0]]);
             var perimeter_positions = VectorSet(2, isize).init(allocator);
 
-            var q = std.ArrayList(@Vector(2, usize)).init(allocator);
+            var q = std.array_list.Managed(@Vector(2, usize)).init(allocator);
             defer q.deinit();
             try q.append(point.*);
 
@@ -245,7 +245,7 @@ const GardenMap = struct {
                 if (visited.contains(curr.*)) continue;
                 sides += 1;
 
-                var nq = std.ArrayList(@Vector(3, isize)).init(allocator);
+                var nq = std.array_list.Managed(@Vector(3, isize)).init(allocator);
                 try nq.append(curr.*);
                 defer nq.deinit();
 

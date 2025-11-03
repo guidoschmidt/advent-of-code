@@ -12,8 +12,8 @@ const Walker = struct {
     instr_idx: u16,
 };
 
-fn parse(input: []const u8, nodes_map: *std.StringHashMap(LR), lr_instructions: *std.ArrayList(u8)) void {
-    var row_it = std.mem.tokenize(u8, input, "\n");
+fn parse(input: []const u8, nodes_map: *std.StringHashMap(LR), lr_instructions: *std.array_list.Managed(u8)) void {
+    var row_it = std.mem.tokenizeAny(u8, input, "\n");
     while (row_it.next()) |row| {
         // LR instructions
         if (!std.mem.containsAtLeast(u8, row, 1, "=")) {
@@ -25,7 +25,7 @@ fn parse(input: []const u8, nodes_map: *std.StringHashMap(LR), lr_instructions: 
             continue;
         }
         // Nodes
-        var assign_it = std.mem.tokenize(u8, row, "=");
+        var assign_it = std.mem.tokenizeAny(u8, row, "=");
         const l_side = std.mem.trim(u8, assign_it.next().?, " ");
         var r_side = assign_it.next().?;
         r_side = std.mem.trim(u8, r_side, " ");
@@ -43,7 +43,7 @@ fn parse(input: []const u8, nodes_map: *std.StringHashMap(LR), lr_instructions: 
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var nodes_map = std.StringHashMap(LR).init(allocator);
-    var lr_instructions = std.ArrayList(u8).init(allocator);
+    var lr_instructions = std.array_list.Managed(u8).init(allocator);
     defer lr_instructions.deinit();
     defer nodes_map.deinit();
 
@@ -68,15 +68,15 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var nodes_map = std.StringHashMap(LR).init(allocator);
-    var lr_instructions = std.ArrayList(u8).init(allocator);
+    var lr_instructions = std.array_list.Managed(u8).init(allocator);
     defer lr_instructions.deinit();
     defer nodes_map.deinit();
 
     parse(input, &nodes_map, &lr_instructions);
 
     // Find all start positions ending with 'A'
-    var positions = std.ArrayList([]const u8).init(allocator);
-    var endings = std.ArrayList([]const u8).init(allocator);
+    var positions = std.array_list.Managed([]const u8).init(allocator);
+    var endings = std.array_list.Managed([]const u8).init(allocator);
     defer positions.deinit();
     var key_it = nodes_map.keyIterator();
     while (key_it.next()) |k| {
@@ -101,7 +101,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     }
     std.debug.print("\n\n", .{});
 
-    var walkers = std.ArrayList(Walker).init(allocator);
+    var walkers = std.array_list.Managed(Walker).init(allocator);
     defer walkers.deinit();
     for (0..positions.items.len) |i| {
         const pos = positions.items[i];
@@ -123,7 +123,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     std.debug.print("\n{d}", .{result});
 }
 
-fn walk(walker: *Walker, node_map: *std.StringHashMap(LR), lr_instructions: *std.ArrayList(u8)) void {
+fn walk(walker: *Walker, node_map: *std.StringHashMap(LR), lr_instructions: *std.array_list.Managed(u8)) void {
     walking: while (true) {
         const node = node_map.get(walker.pos).?;
         const lr_instr = lr_instructions.items[walker.instr_idx];

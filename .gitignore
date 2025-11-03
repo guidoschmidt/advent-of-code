@@ -2,3 +2,5 @@
 zig-out/
 
 **/*/input/**/*.txt
+
+output/

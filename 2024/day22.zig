@@ -5,10 +5,10 @@ const DAY: u8 = 22;
 const Allocator = std.mem.Allocator;
 const log = std.log;
 
-fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(usize) {
+fn parseInput(allocator: Allocator, input: []const u8) !std.array_list.Managed(usize) {
     const trimmed = std.mem.trimRight(u8, input, "\n");
     var it = std.mem.splitSequence(u8, trimmed, "\n");
-    var buyer_numbers = std.ArrayList(usize).init(allocator);
+    var buyer_numbers = std.array_list.Managed(usize).init(allocator);
     while (it.next()) |row| {
         const num = try std.fmt.parseInt(usize, row, 10);
         try buyer_numbers.append(num);
@@ -57,7 +57,7 @@ fn calcPrice(number: usize) usize {
     return @mod(number, 10);
 }
 
-fn calcPriceChangeSequence(start: usize, it_count: usize, changes: *std.ArrayList(PrizeChange)) void {
+fn calcPriceChangeSequence(start: usize, it_count: usize, changes: *std.array_list.Managed(PrizeChange)) void {
     var next = start;
     for (0..it_count) |_| {
         const price_prev = calcPrice(next);
@@ -87,9 +87,9 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     const buyer_numbers = try parseInput(allocator, input);
-    var change_list = std.ArrayList([]PrizeChange).init(allocator);
+    var change_list = std.array_list.Managed([]PrizeChange).init(allocator);
     for (buyer_numbers.items) |num| {
-        var sequence = std.ArrayList(PrizeChange).init(allocator);
+        var sequence = std.array_list.Managed(PrizeChange).init(allocator);
         const t = try std.Thread.spawn(.{}, calcPriceChangeSequence, .{ num, 2000, &sequence });
         t.join();
         try change_list.append(sequence.items);

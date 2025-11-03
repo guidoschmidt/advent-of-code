@@ -8,7 +8,7 @@ const vector_count: usize = 20;
 
 const ParseResult = struct {
     row_count: usize,
-    reports: std.ArrayList(@Vector(vector_count, isize)),
+    reports: std.array_list.Managed(@Vector(vector_count, isize)),
 };
 
 fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
@@ -21,7 +21,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
     row_it.reset();
     // log.info("Row count: {d}", .{row_count});
 
-    var reports = std.ArrayList(@Vector(vector_count, isize)).init(allocator);
+    var reports = std.array_list.Managed(@Vector(vector_count, isize)).init(allocator);
 
     var i: usize = 0;
     while (row_it.next()) |row| : (i += 1) {
@@ -76,7 +76,7 @@ fn checkRow(row: @Vector(vector_count, isize)) bool {
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     const parsed = try parseInput(allocator, input);
 
-    var safe_list = std.ArrayList(bool).init(allocator);
+    var safe_list = std.array_list.Managed(bool).init(allocator);
 
     for (0..parsed.reports.items.len) |i| {
         const row = parsed.reports.items[i];
@@ -96,7 +96,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     const parsed = try parseInput(allocator, input);
 
-    var safe_list = std.ArrayList(bool).init(allocator);
+    var safe_list = std.array_list.Managed(bool).init(allocator);
 
     for (0..parsed.reports.items.len) |i| {
         const row = parsed.reports.items[i];

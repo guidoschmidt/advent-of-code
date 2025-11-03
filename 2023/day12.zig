@@ -143,7 +143,7 @@ pub fn unfold(allocator: Allocator, springs: []const u8, groups: []const usize) 
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var row_it = std.mem.tokenizeAny(u8, input, "\n");
 
     var sum: u128 = 0;
 
@@ -152,8 +152,8 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         const springs = entry_it.next().?;
 
         const groups_str = entry_it.next().?;
-        var groups_it = std.mem.tokenize(u8, groups_str, ",");
-        var groups_list = std.ArrayList(usize).init(allocator);
+        var groups_it = std.mem.tokenizeAny(u8, groups_str, ",");
+        var groups_list = std.array_list.Managed(usize).init(allocator);
         var i: usize = 0;
         while (groups_it.next()) |g| : (i += 1) {
             const n = try std.fmt.parseInt(usize, g, 10);
@@ -166,7 +166,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var row_it = std.mem.tokenizeAny(u8, input, "\n");
 
     var sum: usize = 0;
 
@@ -175,8 +175,8 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
         const springs = entry_it.next().?;
 
         const groups_str = entry_it.next().?;
-        var groups_it = std.mem.tokenize(u8, groups_str, ",");
-        var groups_list = std.ArrayList(usize).init(allocator);
+        var groups_it = std.mem.tokenizeAny(u8, groups_str, ",");
+        var groups_list = std.array_list.Managed(usize).init(allocator);
         var i: usize = 0;
         while (groups_it.next()) |g| : (i += 1) {
             const n = try std.fmt.parseInt(usize, g, 10);

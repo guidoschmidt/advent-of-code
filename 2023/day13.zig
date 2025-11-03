@@ -12,7 +12,7 @@ const Pattern = struct {
     col_matrix: [][]u8 = undefined,
 
     pub fn init(self: *Pattern, allocator: Allocator, input: []const u8) !void {
-        var row_it = std.mem.tokenize(u8, input, "\n");
+        var row_it = std.mem.tokenizeAny(u8, input, "\n");
         self.width = row_it.peek().?.len;
 
         while (row_it.next()) |_| {
@@ -56,7 +56,7 @@ const Pattern = struct {
         // std.debug.print("\n", .{});
         // Rows
         var equal_count_rows: usize = 0;
-        const potential_rows = std.ArrayList([2]?usize).init(allocator);
+        const potential_rows = std.array_list.Managed([2]?usize).init(allocator);
         _ = potential_rows;
         var reflection_rows: [2]?usize = [2]?usize{ null, null };
         outer: for (0..self.row_matrix.len - 1) |r| {
@@ -118,7 +118,7 @@ const Pattern = struct {
         // Columns
         // std.debug.print("\n{s}", .{t.yellow});
         var equal_count_cols: usize = 0;
-        const potential_cols = std.ArrayList([2]?usize).init(allocator);
+        const potential_cols = std.array_list.Managed([2]?usize).init(allocator);
         _ = potential_cols;
         var reflection_cols: [2]?usize = [2]?usize{ null, null };
         outer: for (0..self.col_matrix.len - 1) |c| {
@@ -203,9 +203,9 @@ const Pattern = struct {
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     var row_it = std.mem.splitSequence(u8, input, "\n");
-    var pattern_list = std.ArrayList(Pattern).init(allocator);
+    var pattern_list = std.array_list.Managed(Pattern).init(allocator);
 
-    var current_pattern_data = std.ArrayList(u8).init(allocator);
+    var current_pattern_data = std.array_list.Managed(u8).init(allocator);
     while (row_it.next()) |row| {
         if (row.len == 0) {
             var pattern = Pattern{};
@@ -240,9 +240,9 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var row_it = std.mem.splitSequence(u8, input, "\n");
-    var pattern_list = std.ArrayList(Pattern).init(allocator);
+    var pattern_list = std.array_list.Managed(Pattern).init(allocator);
 
-    var current_pattern_data = std.ArrayList(u8).init(allocator);
+    var current_pattern_data = std.array_list.Managed(u8).init(allocator);
     while (row_it.next()) |row| {
         if (row.len == 0) {
             var pattern = Pattern{};
@@ -280,5 +280,5 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     try aoc.runPart(allocator, 2023, 13, .PUZZLE, part1);
-    try aoc.runPart(allocator, 2023, 13, .PUZZLE, part2);
+    // try aoc.runPart(allocator, 2023, 13, .PUZZLE, part2);
 }

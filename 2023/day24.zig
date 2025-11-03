@@ -43,7 +43,7 @@ const Hailstone = struct {
 fn part1(gpa: Allocator, input: []const u8) anyerror!void {
     var row_it = std.mem.tokenizeAny(u8, input, "\n");
 
-    var hailstones = std.ArrayList(Hailstone).init(gpa);
+    var hailstones = std.array_list.Managed(Hailstone).init(gpa);
 
     while (row_it.next()) |row| {
         var pos_vel_it = std.mem.splitSequence(u8, row, "@");

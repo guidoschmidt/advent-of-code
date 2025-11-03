@@ -178,8 +178,8 @@ fn secondOrderingRule(hand_a: []const u8, hand_b: []const u8, comptime value_fn:
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var cards = std.ArrayList(Card).init(allocator);
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var cards = std.array_list.Managed(Card).init(allocator);
+    var row_it = std.mem.tokenizeAny(u8, input, "\n");
     while (row_it.next()) |row| {
         var entry_it = std.mem.splitSequence(u8, row, " ");
         const hand = entry_it.next().?;
@@ -210,8 +210,8 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    var cards = std.ArrayList(Card).init(allocator);
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var cards = std.array_list.Managed(Card).init(allocator);
+    var row_it = std.mem.tokenizeAny(u8, input, "\n");
     while (row_it.next()) |row| {
         var entry_it = std.mem.splitSequence(u8, row, " ");
         const hand = entry_it.next().?;

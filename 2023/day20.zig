@@ -62,8 +62,8 @@ const Transfer = struct {
 
 const Node = struct {
     name: []const u8,
-    inputs: std.ArrayList(*Node),
-    outputs: std.ArrayList(*Node),
+    inputs: std.array_list.Managed(*Node),
+    outputs: std.array_list.Managed(*Node),
     module: NodeModule,
     state: ?Pulse = undefined,
 
@@ -109,7 +109,7 @@ const Node = struct {
         }
     }
 
-    pub fn process(self: *Node, in: Pulse, from_input: []const u8, transfers: *std.ArrayList(Transfer)) !void {
+    pub fn process(self: *Node, in: Pulse, from_input: []const u8, transfers: *std.array_list.Managed(Transfer)) !void {
         const out = switch (self.module) {
             .BROADCAST => self.processBroadcast(in),
             .FLIP_FLOP => |ff_state| self.processFlipFlop(in, ff_state),
@@ -173,7 +173,7 @@ const SystemState = struct {
     module_dict: std.StringHashMap(Node) = undefined,
     low_pulses_sent: u64 = 0,
     high_pulses_sent: u64 = 0,
-    final_output_modules: ?std.ArrayList(u64) = undefined,
+    final_output_modules: ?std.array_list.Managed(u64) = undefined,
 
     pub fn format(self: SystemState, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
@@ -197,7 +197,7 @@ const SystemState = struct {
             .pulse = .LOW,
         };
 
-        var transfers = std.ArrayList(Transfer).init(self.allocator);
+        var transfers = std.array_list.Managed(Transfer).init(self.allocator);
         try transfers.append(start);
 
         const low_pulse_to_rx = false;
@@ -246,11 +246,11 @@ const SystemState = struct {
 };
 
 fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) {
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var row_it = std.mem.tokenizeSequence(u8, input, "\n");
 
     var module_dict = std.StringHashMap(Node).init(allocator);
 
-    var module_links = std.StringHashMap(std.ArrayList([]const u8)).init(allocator);
+    var module_links = std.StringHashMap(std.array_list.Managed([]const u8)).init(allocator);
     defer module_links.deinit();
 
     while (row_it.next()) |row| {
@@ -277,26 +277,26 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
             .CONJUNCTION => Node{
                 .name = module_name,
                 .module = .{ .CONJUNCTION = std.StringHashMap(Pulse).init(allocator) },
-                .inputs = std.ArrayList(*Node).init(allocator),
-                .outputs = std.ArrayList(*Node).init(allocator),
+                .inputs = std.array_list.Managed(*Node).init(allocator),
+                .outputs = std.array_list.Managed(*Node).init(allocator),
             },
             .FLIP_FLOP => Node{
                 .name = module_name,
                 .module = .{ .FLIP_FLOP = false },
-                .inputs = std.ArrayList(*Node).init(allocator),
-                .outputs = std.ArrayList(*Node).init(allocator),
+                .inputs = std.array_list.Managed(*Node).init(allocator),
+                .outputs = std.array_list.Managed(*Node).init(allocator),
             },
             .BROADCAST => Node{
                 .name = module_name,
                 .module = .{ .BROADCAST = true },
-                .inputs = std.ArrayList(*Node).init(allocator),
-                .outputs = std.ArrayList(*Node).init(allocator),
+                .inputs = std.array_list.Managed(*Node).init(allocator),
+                .outputs = std.array_list.Managed(*Node).init(allocator),
             },
             .OTHER => Node{
                 .name = module_name,
                 .module = .{ .OTHER = true },
-                .inputs = std.ArrayList(*Node).init(allocator),
-                .outputs = std.ArrayList(*Node).init(allocator),
+                .inputs = std.array_list.Managed(*Node).init(allocator),
+                .outputs = std.array_list.Managed(*Node).init(allocator),
             },
         };
 
@@ -305,8 +305,8 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
 
         ///// Links
         const receiver_list_str = entry_it.next().?;
-        var receiver_list_it = std.mem.tokenize(u8, receiver_list_str, ", ");
-        var receivers = std.ArrayList([]const u8).init(allocator);
+        var receiver_list_it = std.mem.tokenizeSequence(u8, receiver_list_str, ", ");
+        var receivers = std.array_list.Managed([]const u8).init(allocator);
         while (receiver_list_it.next()) |receiver_name| {
             try receivers.append(receiver_name);
         }
@@ -326,8 +326,8 @@ fn parseInput(allocator: Allocator, input: []const u8) !std.StringHashMap(Node) 
                 const module = Node{
                     .name = receiver_name,
                     .module = .{ .OTHER = true },
-                    .inputs = std.ArrayList(*Node).init(allocator),
-                    .outputs = std.ArrayList(*Node).init(allocator),
+                    .inputs = std.array_list.Managed(*Node).init(allocator),
+                    .outputs = std.array_list.Managed(*Node).init(allocator),
                 };
                 try module_dict.put(receiver_name, module);
             }
@@ -372,7 +372,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var system = SystemState{
         .allocator = allocator,
         .module_dict = try parseInput(allocator, input),
-        .final_output_modules = std.ArrayList(u64).init(allocator),
+        .final_output_modules = std.array_list.Managed(u64).init(allocator),
     };
 
     if (system.module_dict.get("rx")) |rx_module| {

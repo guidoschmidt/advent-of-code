@@ -15,7 +15,7 @@ fn hash(step: []const u8) u8 {
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     const cleaned_input = try std.mem.replaceOwned(u8, allocator, input, "\n", "");
-    var steps_it = std.mem.tokenize(u8, cleaned_input, ",");
+    var steps_it = std.mem.tokenizeSequence(u8, cleaned_input, ",");
     var sum: u32 = 0;
     while (steps_it.next()) |step| {
         if (step.len == 0) break;

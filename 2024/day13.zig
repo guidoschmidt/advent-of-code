@@ -54,10 +54,10 @@ const Machine = struct {
     }
 };
 
-fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(Machine) {
+fn parseInput(allocator: Allocator, input: []const u8) !std.array_list.Managed(Machine) {
     const trimmed = std.mem.trimRight(u8, input, "\n");
 
-    var machines = std.ArrayList(Machine).init(allocator);
+    var machines = std.array_list.Managed(Machine).init(allocator);
     var machines_it = std.mem.splitSequence(u8, trimmed, "\n\n");
     var idx: usize = 0;
     while (machines_it.next()) |machine_str| : (idx += 1) {

@@ -34,8 +34,8 @@ const Schematic = struct {
 };
 
 const KeyLocks = struct {
-    keys: std.ArrayList(Schematic),
-    locks: std.ArrayList(Schematic),
+    keys: std.array_list.Managed(Schematic),
+    locks: std.array_list.Managed(Schematic),
 
     pub fn solve(self: *KeyLocks) usize {
         var match_count: usize = 0;
@@ -60,8 +60,8 @@ const KeyLocks = struct {
 fn parseInput(allocator: Allocator, input: []const u8) !KeyLocks {
     const trimmed = std.mem.trimRight(u8, input, "\n");
 
-    var keys = std.ArrayList(Schematic).init(allocator);
-    var locks = std.ArrayList(Schematic).init(allocator);
+    var keys = std.array_list.Managed(Schematic).init(allocator);
+    var locks = std.array_list.Managed(Schematic).init(allocator);
 
     var lock_schematics_it = std.mem.splitSequence(u8, trimmed, "\n\n");
     while (lock_schematics_it.next()) |schematic_str| {

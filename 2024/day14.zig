@@ -43,9 +43,7 @@ const Bathroom = struct {
         return bathroom;
     }
 
-    pub fn format(self: Bathroom, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
-        _ = fmt;
-        _ = options;
+    pub fn format(self: Bathroom, writer: *std.Io.Writer) !void {
         for (0..self.cols) |x| {
             try writer.print("\n", .{});
             for (0..self.rows) |y| {
@@ -59,7 +57,7 @@ const Bathroom = struct {
         try writer.print("\n ", .{});
     }
 
-    pub fn animate(self: *Bathroom, robots: *std.ArrayList(Robot), t: usize) void {
+    pub fn animate(self: *Bathroom, robots: *std.array_list.Managed(Robot), t: usize) void {
         for (0..self.cols) |x| {
             for (0..self.rows) |y| {
                 self.buffer[x][y] = 0;
@@ -107,10 +105,10 @@ const Bathroom = struct {
     }
 };
 
-fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(Robot) {
+fn parseInput(allocator: Allocator, input: []const u8) !std.array_list.Managed(Robot) {
     const trimmed = std.mem.trimRight(u8, input, "\n");
 
-    var robots = std.ArrayList(Robot).init(allocator);
+    var robots = std.array_list.Managed(Robot).init(allocator);
 
     var row_it = std.mem.splitSequence(u8, trimmed, "\n");
     while (row_it.next()) |row| {
@@ -149,7 +147,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         bathroom.increase(r.pos, 1);
     }
 
-    log.info("{any}", .{bathroom});
+    log.info("{f}", .{bathroom});
 
     const quadrants = [4]@Vector(2, usize){ .{ 0, 0 }, .{ bathroom.cols / 2 + 1, 0 }, .{ 0, bathroom.rows / 2 + 1 }, .{ bathroom.cols / 2 + 1, bathroom.rows / 2 + 1 } };
 
@@ -175,7 +173,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
         r.move(solution, bathroom.rows, bathroom.cols);
         bathroom.increase(r.pos, 1);
     }
-    log.info("{an}", .{bathroom});
+    log.info("{f}", .{bathroom});
 
     // Finding the solution:
     // Increase the robots position by 1 step and let it run, until

@@ -4,7 +4,7 @@ const aoc = @import("aoc");
 const Allocator = std.mem.Allocator;
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var cards_it = std.mem.tokenize(u8, input, "\n");
+    var cards_it = std.mem.tokenizeSequence(u8, input, "\n");
 
     var total_points: u32 = 0;
 
@@ -12,12 +12,12 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         var card_it = std.mem.splitSequence(u8, card, ":");
         const card_str = card_it.next();
         var num_list_it = std.mem.splitSequence(u8, card_it.next().?, "|");
-        var winning_num_list_it = std.mem.tokenize(u8, num_list_it.next().?, " ");
-        var player_num_list_it = std.mem.tokenize(u8, num_list_it.next().?, " ");
+        var winning_num_list_it = std.mem.tokenizeSequence(u8, num_list_it.next().?, " ");
+        var player_num_list_it = std.mem.tokenizeSequence(u8, num_list_it.next().?, " ");
         std.debug.print("\n- {s} ---\n", .{card_str.?});
 
-        var winning_numbers = std.ArrayList(u32).init(allocator);
-        var player_numbers = std.ArrayList(u32).init(allocator);
+        var winning_numbers = std.array_list.Managed(u32).init(allocator);
+        var player_numbers = std.array_list.Managed(u32).init(allocator);
 
         while (winning_num_list_it.next()) |winning_number_str| {
             const winning_number = try std.fmt.parseInt(u32, winning_number_str, 10);
@@ -53,11 +53,11 @@ fn winning_card_count(allocator: Allocator, card: []const u8) !u32 {
     var card_it = std.mem.splitSequence(u8, card, ":");
     _ = card_it.next();
     var num_list_it = std.mem.splitSequence(u8, card_it.next().?, "|");
-    var winning_num_list_it = std.mem.tokenize(u8, num_list_it.next().?, " ");
-    var player_num_list_it = std.mem.tokenize(u8, num_list_it.next().?, " ");
+    var winning_num_list_it = std.mem.tokenizeSequence(u8, num_list_it.next().?, " ");
+    var player_num_list_it = std.mem.tokenizeSequence(u8, num_list_it.next().?, " ");
 
-    var winning_numbers = std.ArrayList(u32).init(allocator);
-    var player_numbers = std.ArrayList(u32).init(allocator);
+    var winning_numbers = std.array_list.Managed(u32).init(allocator);
+    var player_numbers = std.array_list.Managed(u32).init(allocator);
     defer winning_numbers.deinit();
     defer player_numbers.deinit();
 
@@ -111,7 +111,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     var card_win_count_map = std.AutoHashMap(u32, u32).init(allocator);
 
     var total_cards: u32 = 0;
-    var cards_it = std.mem.tokenize(u8, input, "\n");
+    var cards_it = std.mem.tokenizeSequence(u8, input, "\n");
     var cards_idx: u32 = 0;
 
     // 1. Build map: card nr → win count

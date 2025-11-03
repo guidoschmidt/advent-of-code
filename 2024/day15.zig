@@ -25,7 +25,7 @@ const Dir = enum(u8) {
 const ParseResult = struct {
     robot: Robot,
     warehouse: Warehouse,
-    movements: std.ArrayList(Dir),
+    movements: std.array_list.Managed(Dir),
 };
 
 const Robot = struct {
@@ -235,7 +235,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
     // Parse movememnts
     const movement_input = std.mem.trim(u8, split_it.next() orelse "", "\n");
     const clean_movement_input = try std.mem.replaceOwned(u8, allocator, movement_input, "\n", "");
-    var movements = std.ArrayList(Dir).init(allocator);
+    var movements = std.array_list.Managed(Dir).init(allocator);
     for (clean_movement_input) |d| {
         const dir: Dir = @enumFromInt(d);
         try movements.append(dir);
@@ -295,7 +295,7 @@ fn parseInputWide(allocator: Allocator, input: []const u8) !ParseResult {
     // Parse movememnts
     const movement_input = std.mem.trim(u8, split_it.next() orelse "", "\n");
     const clean_movement_input = try std.mem.replaceOwned(u8, allocator, movement_input, "\n", "");
-    var movements = std.ArrayList(Dir).init(allocator);
+    var movements = std.array_list.Managed(Dir).init(allocator);
     for (clean_movement_input) |d| {
         const dir: Dir = @enumFromInt(d);
         try movements.append(dir);

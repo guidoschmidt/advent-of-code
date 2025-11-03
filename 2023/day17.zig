@@ -102,7 +102,7 @@ const Map = struct {
         self.cells[self.start[0]][self.start[1]].cost = 0;
         self.cells[self.start[0]][self.start[1]].previous = @intCast(self.start);
 
-        var openList = std.ArrayList(@Vector(2, usize)).init(allocator);
+        var openList = std.array_list.Managed(@Vector(2, usize)).init(allocator);
 
         try openList.append(self.start);
 
@@ -113,51 +113,51 @@ const Map = struct {
                 }
             }.f);
 
-            const next = openList.pop();
+            if (openList.pop()) |next| {
+                const x = next[0];
+                const y = next[1];
+                closedList[y][x] = true;
+                std.debug.print("\nPOS: [{d} x {d}] → {d}", .{ x, y, self.cells[y][x].cost });
 
-            const x = next[0];
-            const y = next[1];
-            closedList[y][x] = true;
-            std.debug.print("\nPOS: [{d} x {d}] → {d}", .{ x, y, self.cells[y][x].cost });
+                const neighbors = [4]@Vector(2, isize){
+                    .{ -1, 0 },
+                    .{ 1, 0 },
+                    .{ 0, -1 },
+                    .{ 0, 1 },
+                };
+                for (neighbors) |neighbor| {
+                    const test_x: isize = @as(isize, @intCast(x)) + neighbor[0];
+                    const test_y: isize = @as(isize, @intCast(y)) + neighbor[1];
 
-            const neighbors = [4]@Vector(2, isize){
-                .{ -1, 0 },
-                .{ 1, 0 },
-                .{ 0, -1 },
-                .{ 0, 1 },
-            };
-            for (neighbors) |neighbor| {
-                const test_x: isize = @as(isize, @intCast(x)) + neighbor[0];
-                const test_y: isize = @as(isize, @intCast(y)) + neighbor[1];
+                    if (self.valid(test_x, test_y)) {
+                        const next_x: usize = @intCast(test_x);
+                        const next_y: usize = @intCast(test_y);
 
-                if (self.valid(test_x, test_y)) {
-                    const next_x: usize = @intCast(test_x);
-                    const next_y: usize = @intCast(test_y);
+                        self.tracePath(next_x, next_y);
 
-                    self.tracePath(next_x, next_y);
+                        if (closedList[next_y][next_x]) continue;
 
-                    if (closedList[next_y][next_x]) continue;
+                        if (self.isDestination(next_x, next_y)) {
+                            self.cells[next_y][next_x].previous = .{ x, y };
+                            std.debug.print("\n{s}Destination cell found!{s}", .{ t.red, t.clear });
+                            break :pathsearch;
+                        }
 
-                    if (self.isDestination(next_x, next_y)) {
-                        self.cells[next_y][next_x].previous = .{ x, y };
-                        std.debug.print("\n{s}Destination cell found!{s}", .{ t.red, t.clear });
-                        break :pathsearch;
-                    }
+                        const cost_new = self.cells[y][x].cost + self.buffer[@intCast(next_y)][@intCast(next_x)];
 
-                    const cost_new = self.cells[y][x].cost + self.buffer[@intCast(next_y)][@intCast(next_x)];
-
-                    if (self.cells[next_y][next_x].cost == -1 or
-                        self.cells[next_y][next_x].cost < cost_new)
-                    {
-                        self.cells[next_y][next_x].cost = cost_new;
-                        self.cells[next_y][next_x].previous = .{ x, y };
-                        try openList.append(.{ next_x, next_y });
+                        if (self.cells[next_y][next_x].cost == -1 or
+                            self.cells[next_y][next_x].cost < cost_new)
+                        {
+                            self.cells[next_y][next_x].cost = cost_new;
+                            self.cells[next_y][next_x].previous = .{ x, y };
+                            try openList.append(.{ next_x, next_y });
+                        }
                     }
                 }
-            }
-            self.printBuffer(bool, closedList);
+                self.printBuffer(bool, closedList);
 
-            aoc.blockAskForNext();
+                aoc.blockAskForNext();
+            }
         }
     }
 
@@ -218,7 +218,7 @@ const Path = struct {
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     const cleaned_input = try std.mem.replaceOwned(u8, allocator, input, "\n", "");
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var row_it = std.mem.tokenizeSequence(u8, input, "\n");
 
     const width = row_it.peek().?.len;
     var height: usize = 0;

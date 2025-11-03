@@ -37,11 +37,11 @@ const Equation = struct {
     }
 };
 
-fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(Equation) {
+fn parseInput(allocator: Allocator, input: []const u8) !std.array_list.Managed(Equation) {
     const clean = std.mem.trimRight(u8, input, "\n");
     var row_it = std.mem.splitSequence(u8, clean, "\n");
 
-    var equations = std.ArrayList(Equation).init(allocator);
+    var equations = std.array_list.Managed(Equation).init(allocator);
 
     while (row_it.next()) |row| {
         var eq_it = std.mem.splitSequence(u8, row, " ");

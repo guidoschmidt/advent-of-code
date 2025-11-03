@@ -5,8 +5,8 @@ const DAY: u8 = 11;
 const Allocator = std.mem.Allocator;
 const log = std.log;
 
-fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(usize) {
-    var stones = std.ArrayList(usize).init(allocator);
+fn parseInput(allocator: Allocator, input: []const u8) !std.array_list.Managed(usize) {
+    var stones = std.array_list.Managed(usize).init(allocator);
     const trimmed = std.mem.trimRight(u8, input, "\n");
     var it = std.mem.splitSequence(u8, trimmed, " ");
     while (it.next()) |n| {
@@ -39,8 +39,8 @@ fn printStones(input: []const usize) void {
     std.debug.print("\n\n", .{});
 }
 
-fn apply(allocator: Allocator, input: []const usize) !std.ArrayList(usize) {
-    var result = std.ArrayList(usize).init(allocator);
+fn apply(allocator: Allocator, input: []const usize) !std.array_list.Managed(usize) {
+    var result = std.array_list.Managed(usize).init(allocator);
     for (input) |stone| {
         if (stone == 0) {
             try result.append(1);

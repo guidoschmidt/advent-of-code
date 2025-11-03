@@ -111,7 +111,7 @@ const Maze = struct {
     }
 
     pub fn floodFill(self: *Maze, allocator: Allocator) !usize {
-        var stack = std.ArrayList(@Vector(4, usize)).init(allocator);
+        var stack = std.array_list.Managed(@Vector(4, usize)).init(allocator);
         defer stack.deinit();
         try stack.append(@Vector(4, usize){ self.end[0], self.end[1], @intFromEnum(Dir.S), 0 });
         self.flood_fill_buffer[self.end[1]][self.end[0]] = 0;

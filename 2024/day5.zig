@@ -6,15 +6,15 @@ const Allocator = std.mem.Allocator;
 const log = std.log;
 
 const ParseResult = struct {
-    updates: std.ArrayList([]usize),
-    ordering_rules: std.ArrayList(@Vector(2, usize)),
+    updates: std.array_list.Managed([]usize),
+    ordering_rules: std.array_list.Managed(@Vector(2, usize)),
 };
 
 fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
     const cleaned = std.mem.trimRight(u8, input, "\n");
 
-    var updates = std.ArrayList([]usize).init(allocator);
-    var ordering_rules = std.ArrayList(@Vector(2, usize)).init(allocator);
+    var updates = std.array_list.Managed([]usize).init(allocator);
+    var ordering_rules = std.array_list.Managed(@Vector(2, usize)).init(allocator);
 
     var row_it = std.mem.splitSequence(u8, cleaned, "\n");
     while (row_it.next()) |row| {
@@ -30,7 +30,7 @@ fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
 
         if (std.mem.containsAtLeast(u8, row, 1, ",")) {
             var num_it = std.mem.splitSequence(u8, row, ",");
-            var num_list = std.ArrayList(usize).init(allocator);
+            var num_list = std.array_list.Managed(usize).init(allocator);
             while (num_it.next()) |num_str| {
                 const num = try std.fmt.parseInt(usize, num_str, 10);
                 try num_list.append(num);
@@ -74,10 +74,10 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     }
 
     const result = @reduce(.Add, center_values);
-    std.debug.print("\nResult: {d}", .{result});
+    std.debug.print("\nResult: {any}", .{result});
 }
 
-fn isValid(next: []usize, ordering_rules: *std.ArrayList(@Vector(2, usize))) bool {
+fn isValid(next: []usize, ordering_rules: *std.array_list.Managed(@Vector(2, usize))) bool {
     var valid = true;
     for (0..ordering_rules.items.len) |j| {
         const first = ordering_rules.items[j][0];
@@ -91,7 +91,7 @@ fn isValid(next: []usize, ordering_rules: *std.ArrayList(@Vector(2, usize))) boo
     return valid;
 }
 
-fn reorder(next: []usize, ordering_rules: *std.ArrayList(@Vector(2, usize))) void {
+fn reorder(next: []usize, ordering_rules: *std.array_list.Managed(@Vector(2, usize))) void {
     for (0..ordering_rules.items.len) |j| {
         const first = ordering_rules.items[j][0];
         const second = ordering_rules.items[j][1];
@@ -100,14 +100,14 @@ fn reorder(next: []usize, ordering_rules: *std.ArrayList(@Vector(2, usize))) voi
         const idx_second = std.mem.indexOf(usize, next, &[1]usize{second});
         if (idx_first != null and idx_second != null) {
             if (idx_first.? > idx_second.?) {
-                log.info("[{d} | {d}] -- {d} . {d}", .{ first, second, idx_first.?, idx_second.? });
+                log.info("[{any} | {any}] -- {any} . {any}", .{ first, second, idx_first.?, idx_second.? });
                 const tmp = next[idx_second.?];
                 for (idx_second.?..@min(next.len - 1, idx_first.? + 1)) |s| {
-                    log.info("    {d} <- {d}", .{ s, s +| 1 });
+                    log.info("    {any} <- {any}", .{ s, s +| 1 });
                     next[s] = next[s + 1];
                 }
                 next[idx_first.?] = tmp;
-                log.info("Re-sorted: {d}", .{next});
+                log.info("Re-sorted: {any}", .{next});
             }
         }
     }
@@ -123,21 +123,21 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
         const valid = isValid(next, &parsed.ordering_rules);
         if (!valid) {
-            log.info("Original:  {d}", .{next});
+            log.info("Original:  {any}", .{next});
 
             while (!isValid(next, &parsed.ordering_rules)) {
                 reorder(next, &parsed.ordering_rules);
             }
 
             const center = next.len / 2;
-            log.info("Re-sorted: {d}", .{next});
-            log.info("    > {d}", .{next[center]});
+            log.info("Re-sorted: {any}", .{next});
+            log.info("    > {any}", .{next[center]});
             center_values[i] = next[center];
         }
     }
 
     const result = @reduce(.Add, center_values);
-    std.debug.print("\nResult: {d}", .{result});
+    std.debug.print("\nResult: {any}", .{result});
 }
 
 pub fn main() !void {

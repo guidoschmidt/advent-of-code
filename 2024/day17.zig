@@ -23,11 +23,11 @@ const Machine = struct {
     memory: [3]usize = .{ 0, 0, 0 },
     program: []const u8 = undefined,
     instr_ptr: usize = 0,
-    output: std.ArrayList(usize) = undefined,
+    output: std.array_list.Managed(usize) = undefined,
 
     pub fn init(allocator: Allocator) Machine {
         var instance = Machine{};
-        instance.output = std.ArrayList(usize).init(allocator);
+        instance.output = std.array_list.Managed(usize).init(allocator);
         return instance;
     }
 

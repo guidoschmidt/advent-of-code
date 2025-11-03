@@ -116,9 +116,9 @@ const WorkItem = struct {
 };
 
 fn part1(gpa: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var row_it = std.mem.tokenizeSequence(u8, input, "\n");
 
-    var part_ratings = std.ArrayList(PartRating).init(gpa);
+    var part_ratings = std.array_list.Managed(PartRating).init(gpa);
     var workflows = std.StringHashMap(Workflow).init(gpa);
 
     while (row_it.next()) |row| {
@@ -127,8 +127,8 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
             var name_it = std.mem.splitSequence(u8, row, "{");
             const name = name_it.next().?;
             const workflow_str = name_it.next().?;
-            var rules_it = std.mem.tokenize(u8, workflow_str[0 .. workflow_str.len - 1], ",");
-            var rule_list = std.ArrayList(Rule).init(gpa);
+            var rules_it = std.mem.tokenizeSequence(u8, workflow_str[0 .. workflow_str.len - 1], ",");
+            var rule_list = std.array_list.Managed(Rule).init(gpa);
             while (rules_it.next()) |rule_str| {
                 if (std.mem.containsAtLeast(u8, rule_str, 1, "<")) {
                     const idx_comp = std.mem.indexOf(u8, rule_str, "<").?;
@@ -177,10 +177,10 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
 
         // Part ratings
         if (row[0] == '{') {
-            var ratings_it = std.mem.tokenize(u8, row[1 .. row.len - 1], ",");
+            var ratings_it = std.mem.tokenizeSequence(u8, row[1 .. row.len - 1], ",");
             var part_rating = PartRating{};
             while (ratings_it.next()) |rating_str| {
-                var rating_it = std.mem.split(u8, rating_str, "=");
+                var rating_it = std.mem.splitSequence(u8, rating_str, "=");
                 const cat = rating_it.next().?[0];
                 const num_str = rating_it.next().?;
                 const num = try std.fmt.parseInt(u16, num_str, 10);
@@ -202,12 +202,12 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
     //     std.debug.print("\nWorkflow: {any}", .{ wf });
     // }
 
-    var accepted = std.ArrayList(PartRating).init(gpa);
+    var accepted = std.array_list.Managed(PartRating).init(gpa);
     const start_workflow_name = "in";
     const start_workflow = workflows.get(start_workflow_name).?;
     // std.debug.print("\nStart: {any}", .{ start_workflow });
 
-    var work_queue = std.ArrayList(WorkItem).init(gpa);
+    var work_queue = std.array_list.Managed(WorkItem).init(gpa);
     for (0..part_ratings.items.len) |idx| {
         try work_queue.append(WorkItem{
             .part_rating = part_ratings.items[idx],
@@ -215,19 +215,20 @@ fn part1(gpa: Allocator, input: []const u8) anyerror!void {
         });
     }
     while (work_queue.items.len > 0) {
-        const curr_item = work_queue.pop();
-        var curr_workflow = curr_item.workflow;
-        const curr_part_rating = curr_item.part_rating;
-        const next_workflow_name = curr_workflow.process(curr_part_rating);
-        if (std.mem.eql(u8, next_workflow_name, "A")) {
-            try accepted.append(curr_part_rating);
-            continue;
-        }
-        if (workflows.contains(next_workflow_name)) {
-            try work_queue.append(WorkItem{
-                .workflow = workflows.get(next_workflow_name).?,
-                .part_rating = curr_part_rating,
-            });
+        if (work_queue.pop()) |curr_item| {
+            var curr_workflow = curr_item.workflow;
+            const curr_part_rating = curr_item.part_rating;
+            const next_workflow_name = curr_workflow.process(curr_part_rating);
+            if (std.mem.eql(u8, next_workflow_name, "A")) {
+                try accepted.append(curr_part_rating);
+                continue;
+            }
+            if (workflows.contains(next_workflow_name)) {
+                try work_queue.append(WorkItem{
+                    .workflow = workflows.get(next_workflow_name).?,
+                    .part_rating = curr_part_rating,
+                });
+            }
         }
     }
 

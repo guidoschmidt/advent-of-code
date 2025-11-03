@@ -17,7 +17,7 @@ const AntennaMap = struct {
     cols: usize = undefined,
     buffer: [][]u8 = undefined,
     viz: [][]u8 = undefined,
-    antenna_positions: std.ArrayList(@Vector(3, isize)) = undefined,
+    antenna_positions: std.array_list.Managed(@Vector(3, isize)) = undefined,
 
     pub fn init(self: *AntennaMap, allocator: Allocator, row_it: *std.mem.SplitIterator(u8, .sequence)) !void {
         self.cols = row_it.peek().?.len;
@@ -25,7 +25,7 @@ const AntennaMap = struct {
         while (row_it.next()) |_| : (self.rows += 1) {}
         row_it.reset();
 
-        self.antenna_positions = std.ArrayList(@Vector(3, isize)).init(allocator);
+        self.antenna_positions = std.array_list.Managed(@Vector(3, isize)).init(allocator);
 
         var y: usize = 0;
         self.buffer = try allocator.alloc([]u8, self.cols);
@@ -91,7 +91,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     // log.info("# Antennas: {d}", .{map.antenna_positions.items.len});
 
     const antennas = try map.antenna_positions.clone();
-    var antenna_pairs = std.ArrayList(AntennaPair).init(allocator);
+    var antenna_pairs = std.array_list.Managed(AntennaPair).init(allocator);
 
     while (map.antenna_positions.items.len > 0) {
         const a = map.antenna_positions.pop();
@@ -168,7 +168,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     log.info("# Antennas: {d}", .{map.antenna_positions.items.len});
 
     const antennas = try map.antenna_positions.clone();
-    var antenna_pairs = std.ArrayList(AntennaPair).init(allocator);
+    var antenna_pairs = std.array_list.Managed(AntennaPair).init(allocator);
 
     while (map.antenna_positions.items.len > 0) {
         const a = map.antenna_positions.pop();

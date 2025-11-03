@@ -23,15 +23,15 @@ const Pos = struct {
 const Map = struct {
     cols: usize = undefined,
     rows: usize = undefined,
-    buffer: std.ArrayList(u8) = undefined,
-    galaxies: std.ArrayList(Pos) = undefined,
+    buffer: std.array_list.Managed(u8) = undefined,
+    galaxies: std.array_list.Managed(Pos) = undefined,
 
     pub fn init(self: *Map, allocator: Allocator, cols: usize, rows: usize) void {
         self.cols = cols;
         self.rows = rows;
-        self.buffer = std.ArrayList(u8).init(allocator);
+        self.buffer = std.array_list.Managed(u8).init(allocator);
         self.buffer.items = allocator.alloc(u8, self.cols * self.rows) catch unreachable;
-        self.galaxies = std.ArrayList(Pos).init(allocator);
+        self.galaxies = std.array_list.Managed(Pos).init(allocator);
     }
 
     pub fn set(self: *Map, y: usize, x: usize, v: u8) void {
@@ -85,7 +85,7 @@ const Map = struct {
         // std.debug.print("\n→ Expand row {d}", .{row});
         for (0..self.galaxies.items.len) |g| {
             const galaxy = &self.galaxies.items[g];
-            if(galaxy.y > row) {
+            if (galaxy.y > row) {
                 // std.debug.print("\n    → Galaxy {any}", .{ galaxy });
                 galaxy.*.y += EXPANDING_STEPS_PART2;
                 // std.debug.print(" → \x1B[31m{any}\x1B[0m", .{ galaxy });
@@ -99,7 +99,7 @@ const Map = struct {
         // std.debug.print("\n→ Expand col {d}", .{col});
         for (0..self.galaxies.items.len) |g| {
             const galaxy = &self.galaxies.items[g];
-            if(galaxy.x > col) {
+            if (galaxy.x > col) {
                 // std.debug.print("\n    → Galaxy {any}", .{ galaxy });
                 galaxy.*.x += EXPANDING_STEPS_PART2;
                 // std.debug.print(" → \x1B[31m{any}\x1B[0m", .{ galaxy });
@@ -109,7 +109,7 @@ const Map = struct {
         // std.debug.print("\n    → Map size: \x1B[31m{d}\x1B[0m x {d}", .{ self.cols, self.rows });
     }
 
-    pub fn findGalaxies(self: *Map) *std.ArrayList(Pos) {
+    pub fn findGalaxies(self: *Map) *std.array_list.Managed(Pos) {
         for (0..self.cols) |x| {
             for (0..self.rows) |y| {
                 const idx = y * self.cols + x;
@@ -123,15 +123,15 @@ const Map = struct {
     }
 
     pub fn animate(self: *Map) void {
-        for(0..self.rows) |dy| {
-            for(0..self.cols) |dx| {
+        for (0..self.rows) |dy| {
+            for (0..self.cols) |dx| {
                 std.debug.print("\x1B[{d};{d}H", .{ dy, dx });
                 const idx = dy * self.cols + dx;
                 const val = self.buffer.items[idx];
-                switch(val) {
-                    'X' => std.debug.print("\x1B[33m{c}\x1B[0m", .{ val }),
-                    '#' => std.debug.print("\x1B[37m{c}\x1B[0m", .{ val }),
-                    '.' => std.debug.print("{c}", .{ ' ' }),
+                switch (val) {
+                    'X' => std.debug.print("\x1B[33m{c}\x1B[0m", .{val}),
+                    '#' => std.debug.print("\x1B[37m{c}\x1B[0m", .{val}),
+                    '.' => std.debug.print("{c}", .{' '}),
                     else => {},
                 }
             }
@@ -145,21 +145,19 @@ fn manhattenDist(start: Pos, end: Pos) u32 {
     return @intCast(a + b);
 }
 
-
 fn bresenham(start: Pos, end: Pos, map: *Map) u32 {
     _ = map;
     var x0: i32 = @intCast(start.x);
     var y0: i32 = @intCast(start.y);
-    const dx: i32 = std.math.absInt(@as(i32, @intCast(end.x)) - @as(i32, @intCast(start.x)))
-        catch unreachable;
+    const dx: i32 = std.math.absInt(@as(i32, @intCast(end.x)) - @as(i32, @intCast(start.x))) catch unreachable;
     const dy: i32 = -(std.math.absInt(@as(i32, @intCast(end.y)) - @as(i32, @intCast(start.y))) catch unreachable);
-    const sx: i8 = if(start.x < end.x) 1 else -1;
-    const sy: i8 = if(start.y < end.y) 1 else -1;
+    const sx: i8 = if (start.x < end.x) 1 else -1;
+    const sy: i8 = if (start.y < end.y) 1 else -1;
     var err = dx + dy;
     var e2: i32 = 0;
 
     var steps: u32 = 0;
-    while(true) {
+    while (true) {
         // if ((x0 != start.x and x0 != end.x) or
         //     (y0 != start.y and y0 != end.y)) {
         //     map.set(@intCast(y0), @intCast(x0), 'X');
@@ -182,7 +180,7 @@ fn bresenham(start: Pos, end: Pos, map: *Map) u32 {
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.tokenize(u8, input, "\n\r");
+    var row_it = std.mem.tokenizeAny(u8, input, "\n\r");
 
     const col_count: usize = @intCast(row_it.peek().?.len);
     const row_count: usize = @as(usize, @intCast(row_it.buffer.len)) / (col_count + 1);
@@ -192,7 +190,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     map.init(allocator, col_count, row_count);
 
     var y: usize = 0;
-    var rows_to_expand = std.ArrayList(usize).init(allocator);
+    var rows_to_expand = std.array_list.Managed(usize).init(allocator);
     while (row_it.next()) |row| {
         if (!std.mem.containsAtLeast(u8, row, 1, "#")) {
             rows_to_expand.append(y) catch unreachable;
@@ -203,7 +201,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         y += 1;
     }
 
-    var cols_to_expand = std.ArrayList(usize).init(allocator);
+    var cols_to_expand = std.array_list.Managed(usize).init(allocator);
     for (0..map.cols) |x| {
         var empty_count: usize = 0;
         for (0..map.rows) |yy| {
@@ -215,8 +213,8 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
             cols_to_expand.append(x) catch unreachable;
         }
     }
-    std.debug.print("\n#Column Expansion: {d}", .{ cols_to_expand.items.len });
-    std.debug.print("\n#Row Expansion: {d}", .{ rows_to_expand.items.len });
+    std.debug.print("\n#Column Expansion: {d}", .{cols_to_expand.items.len});
+    std.debug.print("\n#Row Expansion: {d}", .{rows_to_expand.items.len});
 
     var expansions: usize = 0;
     for (rows_to_expand.items) |row| {
@@ -235,9 +233,9 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
 
     var pairings: u16 = 0;
     var i: u32 = 0;
-    var pairs = std.ArrayList([2]usize).init(allocator);
-    for(0..galaxies.items.len) |g_a| {
-        for(pairings..galaxies.items.len) |g_b| {
+    var pairs = std.array_list.Managed([2]usize).init(allocator);
+    for (0..galaxies.items.len) |g_a| {
+        for (pairings..galaxies.items.len) |g_b| {
             if (g_a == g_b) continue;
             pairs.append([2]usize{ g_a, g_b }) catch unreachable;
             i += 1;
@@ -246,7 +244,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     }
 
     var steps: u32 = 0;
-    while(pairs.items.len > 0) {
+    while (pairs.items.len > 0) {
         // const next_idx = rng.random().intRangeLessThan(usize, 0, pairs.items.len);
         const next_idx = 0;
         const next_pair = pairs.swapRemove(next_idx);
@@ -260,11 +258,11 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
         // break;
     }
 
-    std.debug.print("\n\nResult: {d}\n", .{ steps });
+    std.debug.print("\n\nResult: {d}\n", .{steps});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.tokenize(u8, input, "\n\r");
+    var row_it = std.mem.tokenizeAny(u8, input, "\n\r");
 
     const col_count: usize = @intCast(row_it.peek().?.len);
     const row_count: usize = @as(usize, @intCast(row_it.buffer.len)) / (col_count + 1);
@@ -274,7 +272,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     map.init(allocator, col_count, row_count);
 
     var y: usize = 0;
-    var rows_to_expand = std.ArrayList(usize).init(allocator);
+    var rows_to_expand = std.array_list.Managed(usize).init(allocator);
     while (row_it.next()) |row| {
         if (!std.mem.containsAtLeast(u8, row, 1, "#")) {
             rows_to_expand.append(y) catch unreachable;
@@ -285,7 +283,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
         y += 1;
     }
 
-    var cols_to_expand = std.ArrayList(usize).init(allocator);
+    var cols_to_expand = std.array_list.Managed(usize).init(allocator);
     for (0..map.cols) |x| {
         var empty_count: usize = 0;
         for (0..map.rows) |yy| {
@@ -297,8 +295,8 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
             cols_to_expand.append(x) catch unreachable;
         }
     }
-    std.debug.print("\n#Column Expansion: {d}", .{ cols_to_expand.items.len });
-    std.debug.print("\n#Row Expansion: {d}", .{ rows_to_expand.items.len });
+    std.debug.print("\n#Column Expansion: {d}", .{cols_to_expand.items.len});
+    std.debug.print("\n#Row Expansion: {d}", .{rows_to_expand.items.len});
 
     // Find galaxies before expanding
     const galaxies = map.findGalaxies();
@@ -317,9 +315,9 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
 
     var pairings: u16 = 0;
     var i: u32 = 0;
-    var pairs = std.ArrayList([2]usize).init(allocator);
-    for(0..galaxies.items.len) |g_a| {
-        for(pairings..galaxies.items.len) |g_b| {
+    var pairs = std.array_list.Managed([2]usize).init(allocator);
+    for (0..galaxies.items.len) |g_a| {
+        for (pairings..galaxies.items.len) |g_b| {
             if (g_a == g_b) continue;
             pairs.append([2]usize{ g_a, g_b }) catch unreachable;
             i += 1;
@@ -328,7 +326,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     }
 
     var steps: u128 = 0;
-    while(pairs.items.len > 0) {
+    while (pairs.items.len > 0) {
         const next_idx = 0;
         const next_pair = pairs.swapRemove(next_idx);
         const galaxy_a = galaxies.items[next_pair[0]];
@@ -338,7 +336,7 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
         steps += step_count;
     }
 
-    std.debug.print("\n\nResult: {d}\n", .{ steps });
+    std.debug.print("\n\nResult: {d}\n", .{steps});
 }
 
 pub fn main() !void {

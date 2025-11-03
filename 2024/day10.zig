@@ -23,9 +23,9 @@ const TrailMap = struct {
     cols: usize = undefined,
     buffer: [][]u8 = undefined,
     viz: [][]u8 = undefined,
-    trails: std.ArrayList(Trail) = undefined,
+    trails: std.array_list.Managed(Trail) = undefined,
     result_vector: @Vector(300, usize) = @splat(0),
-    finished_trails: std.AutoHashMap(usize, std.ArrayList(@Vector(2, usize))) = undefined,
+    finished_trails: std.AutoHashMap(usize, std.array_list.Managed(@Vector(2, usize))) = undefined,
     find_distinct_trails: bool = false,
 
     pub fn init(self: *TrailMap, allocator: Allocator, row_it: *std.mem.SplitIterator(u8, .sequence)) !void {
@@ -35,8 +35,8 @@ const TrailMap = struct {
 
         self.buffer = try allocator.alloc([]u8, self.cols);
         self.viz = try allocator.alloc([]u8, self.cols);
-        self.trails = std.ArrayList(Trail).init(allocator);
-        self.finished_trails = std.AutoHashMap(usize, std.ArrayList(@Vector(2, usize))).init(allocator);
+        self.trails = std.array_list.Managed(Trail).init(allocator);
+        self.finished_trails = std.AutoHashMap(usize, std.array_list.Managed(@Vector(2, usize))).init(allocator);
 
         var x: usize = 0;
         var zeroes: usize = 0;
@@ -57,7 +57,7 @@ const TrailMap = struct {
                         .position = @Vector(2, usize){ x, y },
                     };
                     try self.trails.append(start_trail);
-                    try self.finished_trails.put(start_trail.id, std.ArrayList(@Vector(2, usize)).init(allocator));
+                    try self.finished_trails.put(start_trail.id, std.array_list.Managed(@Vector(2, usize)).init(allocator));
                     self.viz[x][y] = '0';
                     zeroes += 1;
                 }

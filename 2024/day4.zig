@@ -7,7 +7,7 @@ const log = std.log;
 
 const ParseResult = struct {
     map: Map,
-    candidates: std.ArrayList(@Vector(2, isize)),
+    candidates: std.array_list.Managed(@Vector(2, isize)),
 };
 
 const Map = struct {
@@ -52,7 +52,7 @@ fn parseInput(allocator: Allocator, input: []const u8, start: u8) !ParseResult {
     row_count = row_it.buffer.len / col_count;
     log.info("Map size {d} x {d}", .{ row_count, col_count });
 
-    var candidates = std.ArrayList(@Vector(2, isize)).init(allocator);
+    var candidates = std.array_list.Managed(@Vector(2, isize)).init(allocator);
     var map = Map{
         .rows = row_count,
         .cols = col_count,

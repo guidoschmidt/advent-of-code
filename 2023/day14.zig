@@ -70,7 +70,7 @@ fn sumLoad(map: *[][]u8) usize {
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    var row_it = std.mem.tokenize(u8, input, "\n");
+    var row_it = std.mem.tokenizeSequence(u8, input, "\n");
     const data = try allocator.alloc(u8, input.len);
     _ = std.mem.replace(u8, input, "\n", "", data);
 

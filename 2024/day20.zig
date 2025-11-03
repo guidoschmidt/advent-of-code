@@ -13,7 +13,7 @@ const Racetrack = struct {
     start: @Vector(2, usize) = undefined,
     end: @Vector(2, usize) = undefined,
     buffer: [][]u8 = undefined,
-    track: std.ArrayList(@Vector(2, usize)) = undefined,
+    track: std.array_list.Managed(@Vector(2, usize)) = undefined,
 
     pub fn init(allocator: Allocator, input: []const u8) !Racetrack {
         var instance = Racetrack{};
@@ -227,10 +227,10 @@ const Racetrack = struct {
     }
 
     pub fn findTrack(self: *Racetrack, allocator: Allocator, start: @Vector(2, usize)) !usize {
-        var pos_list = std.ArrayList(@Vector(2, usize)).init(allocator);
+        var pos_list = std.array_list.Managed(@Vector(2, usize)).init(allocator);
         try pos_list.append(start);
 
-        self.track = std.ArrayList(@Vector(2, usize)).init(allocator);
+        self.track = std.array_list.Managed(@Vector(2, usize)).init(allocator);
 
         while (pos_list.items.len > 0) {
             const current = pos_list.pop().?;

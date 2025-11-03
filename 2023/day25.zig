@@ -5,7 +5,7 @@ const Allocator = std.mem.Allocator;
 
 const Node = struct {
     name: []const u8,
-    links: std.ArrayList(?*Node),
+    links: std.array_list.Managed(?*Node),
     contract: u16 = 1,
 
     pub fn deinit(self: *Node) void {
@@ -40,7 +40,8 @@ const Graph = struct {
         return self.nodes.getPtr(key_a).?;
 
         // _ = rng;
-        // var nodes = std.ArrayList(*Node).init(self.allocator);
+        // var nodes = std.array_list.Managed
+      (*Node).init(self.allocator);
         // defer nodes.deinit();
         // var it = self.nodes.valueIterator();
         // while (it.next()) |node| {
@@ -58,7 +59,7 @@ const Graph = struct {
     pub fn addNode(self: *Graph, name: []const u8) !void {
         try self.nodes.put(name, Node {
             .name = std.mem.trim(u8, name, " "),
-            .links = std.ArrayList(?*Node).init(self.allocator),
+            .links = std.array_list.Managed(?*Node).init(self.allocator),
         });
     }
 
@@ -77,7 +78,7 @@ const Graph = struct {
 
         const new_node = Node {
             .name = contracted_node_name,
-            .links = std.ArrayList(?*Node).init(self.allocator),
+            .links = std.array_list.Managed(?*Node).init(self.allocator),
         };
         try self.nodes.put(contracted_node_name, new_node);
 
@@ -139,7 +140,7 @@ const Graph = struct {
         }
 
         // Remove teh old nodes
-        _ = self.nodes.remove(a); 
+        _ = self.nodes.remove(a);
         _ = self.nodes.remove(b);
 
         return new_node_ptr;
@@ -243,12 +244,12 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     }
     std.debug.print("\n{any}", .{ graph });
 
-    var queque = std.ArrayList(*Node).init(allocator);
+    var queque = std.array_list.Managed(*Node).init(allocator);
 
     const rng_gen = std.rand.DefaultPrng;
     var rng: std.rand.Xoshiro256 = rng_gen.init(0);
     try queque.append(try graph.getRandomNode(&rng));
-    
+
     while(queque.items.len > 0) {
         const next = queque.pop();
         std.debug.print("\n... Contracting {s}", .{ next });

@@ -11,13 +11,13 @@ pub fn part1(_: Allocator, input: []const u8) anyerror!void {
     const max_green = 13;
     const max_blue = 14;
 
-    var it = std.mem.tokenize(u8, input, "\n");
+    var it = std.mem.tokenizeAny(u8, input, "\n");
     var result: u32 = 0;
     var sum_of_powers: u32 = 0;
     game: while (it.next()) |v| {
         var line_it = std.mem.splitSequence(u8, v, ":");
         const game_id_str = line_it.next().?;
-        var id_str_it = std.mem.tokenize(u8, game_id_str, " ");
+        var id_str_it = std.mem.tokenizeAny(u8, game_id_str, " ");
         _ = id_str_it.next();
         const game_id = try std.fmt.parseInt(u8, id_str_it.next().?, 10);
 
@@ -26,11 +26,11 @@ pub fn part1(_: Allocator, input: []const u8) anyerror!void {
         var lowest_blue: u16 = 1;
 
         const config = line_it.next().?;
-        var set_it = std.mem.tokenize(u8, config, ";");
+        var set_it = std.mem.tokenizeAny(u8, config, ";");
         while (set_it.next()) |set| {
-            var cube_it = std.mem.tokenize(u8, set, ",");
+            var cube_it = std.mem.tokenizeAny(u8, set, ",");
             while (cube_it.next()) |cube| {
-                var digit_color_it = std.mem.tokenize(u8, cube, " ");
+                var digit_color_it = std.mem.tokenizeAny(u8, cube, " ");
                 const digit_str = digit_color_it.next().?;
                 const color = digit_color_it.next().?;
                 const digit = try std.fmt.parseInt(u16, digit_str, 10);
@@ -65,14 +65,14 @@ pub fn part1(_: Allocator, input: []const u8) anyerror!void {
 }
 
 pub fn part2(_: Allocator, input: []const u8) anyerror!void {
-    var it = std.mem.tokenize(u8, input, "\n");
+    var it = std.mem.tokenizeAny(u8, input, "\n");
     var result: u32 = 0;
     var sum_of_powers: u32 = 0;
     // game:
     while (it.next()) |v| {
         var line_it = std.mem.splitSequence(u8, v, ":");
         const game_id_str = line_it.next().?;
-        var id_str_it = std.mem.tokenize(u8, game_id_str, " ");
+        var id_str_it = std.mem.tokenizeAny(u8, game_id_str, " ");
         _ = id_str_it.next();
         const game_id = try std.fmt.parseInt(u8, id_str_it.next().?, 10);
 
@@ -81,11 +81,11 @@ pub fn part2(_: Allocator, input: []const u8) anyerror!void {
         var lowest_blue: u16 = 1;
 
         const config = line_it.next().?;
-        var set_it = std.mem.tokenize(u8, config, ";");
+        var set_it = std.mem.tokenizeAny(u8, config, ";");
         while (set_it.next()) |set| {
-            var cube_it = std.mem.tokenize(u8, set, ",");
+            var cube_it = std.mem.tokenizeAny(u8, set, ",");
             while (cube_it.next()) |cube| {
-                var digit_color_it = std.mem.tokenize(u8, cube, " ");
+                var digit_color_it = std.mem.tokenizeAny(u8, cube, " ");
                 const digit_str = digit_color_it.next().?;
                 const color = digit_color_it.next().?;
                 const digit = try std.fmt.parseInt(u16, digit_str, 10);

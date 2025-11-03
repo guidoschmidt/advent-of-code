@@ -13,8 +13,8 @@ const ParseResult = struct {
 };
 
 fn parseInput(allocator: Allocator, input: []const u8) !ParseResult {
-    var towel_patterns = std.ArrayList([]const u8).init(allocator);
-    var designs = std.ArrayList([]const u8).init(allocator);
+    var towel_patterns = std.array_list.Managed([]const u8).init(allocator);
+    var designs = std.array_list.Managed([]const u8).init(allocator);
 
     const cleaned_input = std.mem.trimRight(u8, input, "\n");
     var it = std.mem.splitSequence(u8, cleaned_input, "\n");

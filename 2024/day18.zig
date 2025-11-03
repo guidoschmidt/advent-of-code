@@ -21,7 +21,7 @@ const Cell = struct {
 const MemorySpace = struct {
     size: @Vector(2, usize) = undefined,
     buffer: [][]u8 = undefined,
-    corruptions: std.ArrayList(@Vector(2, usize)) = undefined,
+    corruptions: std.array_list.Managed(@Vector(2, usize)) = undefined,
     corruption_idx: usize = 1024,
     cell_buffer: [][]Cell = undefined,
     current_cell: ?Cell = undefined,
@@ -31,7 +31,7 @@ const MemorySpace = struct {
         instance.size = size;
 
         instance.buffer = try allocator.alloc([]u8, instance.size[0]);
-        instance.corruptions = std.ArrayList(@Vector(2, usize)).init(allocator);
+        instance.corruptions = std.array_list.Managed(@Vector(2, usize)).init(allocator);
 
         for (0..instance.size[0]) |x| {
             instance.buffer[x] = try allocator.alloc(u8, instance.size[1]);
@@ -86,7 +86,7 @@ const MemorySpace = struct {
             }
         }
 
-        var cell_list = std.ArrayList(Cell).init(allocator);
+        var cell_list = std.array_list.Managed(Cell).init(allocator);
         try cell_list.append(self.cell_buffer[0][0]);
 
         while (cell_list.items.len > 0) {

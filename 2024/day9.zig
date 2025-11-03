@@ -29,8 +29,8 @@ const Block = struct {
     }
 };
 
-fn parseInput(allocator: Allocator, input: []const u8) !std.ArrayList(usize) {
-    var disk_map = std.ArrayList(usize).init(allocator);
+fn parseInput(allocator: Allocator, input: []const u8) !std.array_list.Managed(usize) {
+    var disk_map = std.array_list.Managed(usize).init(allocator);
     for (input) |c| {
         if (c == '\n') break;
         const num = try std.fmt.charToDigit(c, 10);
@@ -100,7 +100,7 @@ fn calcChecksum(block_map: []const isize) !usize {
 }
 
 fn moveFileBlocks(allocator: Allocator, disk_map: []const usize) !void {
-    var block_map = std.ArrayList(isize).init(allocator);
+    var block_map = std.array_list.Managed(isize).init(allocator);
     var idx: usize = 0;
     for (0..disk_map.len) |i| {
         const count = disk_map[i];
@@ -141,7 +141,7 @@ fn moveFileBlocks(allocator: Allocator, disk_map: []const usize) !void {
 }
 
 fn moveFiles(allocator: Allocator, disk_map: []const usize) !void {
-    var block_map = std.ArrayList(Block).init(allocator);
+    var block_map = std.array_list.Managed(Block).init(allocator);
     var idx: usize = 0;
     for (0..disk_map.len) |i| {
         const count = disk_map[i];

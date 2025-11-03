@@ -42,7 +42,7 @@ const SpringsConfig = struct {
 const SpringRecord  = struct {
     springs: []const u8 = undefined,
     numeric: []const usize = undefined,
-    variables: std.ArrayList(usize) =  std.ArrayList(usize).init(allocator),
+    variables: std.array_list.Managed(usize) =  std.array_list.Managed(usize).init(allocator),
 
     fn printSprings(self: *SpringRecord, springs: []const u8) void {
         for(0..springs.len) |s| {
@@ -71,7 +71,7 @@ const SpringRecord  = struct {
         // std.debug.print("\n{any}", .{ self.variables.items });
       
         var working_combinations: u32 = 0;
-        var configurations = std.ArrayList(SpringsConfig).init(allocator);
+        var configurations = std.array_list.Managed(SpringsConfig).init(allocator);
 
         var test_config_a = allocator.dupe(u8, self.springs) catch unreachable;
         test_config_a[self.variables.items[0]] = '#';
@@ -131,7 +131,7 @@ const SpringRecord  = struct {
         }
 
         var split_it = std.mem.tokenize(u8, springs, ".");
-        var group_counts = std.ArrayList(usize).init(allocator);
+        var group_counts = std.array_list.Managed(usize).init(allocator);
         while(split_it.next()) |split| {
             group_counts.append(@intCast(split.len)) catch unreachable;
         }
@@ -160,7 +160,7 @@ const SpringRecord  = struct {
 fn part1(input: []const u8) anyerror!void {
     var row_it = std.mem.tokenize(u8, input, "\n");
 
-    var records = std.ArrayList(SpringRecord).init(allocator);
+    var records = std.array_list.Managed(SpringRecord).init(allocator);
 
     var row_num: u32 = 0;
     while(row_it.next()) |row| {
@@ -169,7 +169,7 @@ fn part1(input: []const u8) anyerror!void {
         const numeric_str = entry_it.next().?;
 
         var num_it = std.mem.tokenize(u8, numeric_str, ",");
-        var numeric = std.ArrayList(usize).init(allocator);
+        var numeric = std.array_list.Managed(usize).init(allocator);
         while(num_it.next()) |v| {
             const n = std.fmt.parseInt(usize, v, 10) catch unreachable;
             numeric.append(n) catch unreachable;

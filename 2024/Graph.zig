@@ -39,22 +39,23 @@ pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptio
 }
 
 pub fn toDotFile(self: *Self, allocator: Allocator) !void {
-    const file_path = "graph.dot";
+    const file_path = try std.fs.path.join(allocator, &.{ "output", "graph.dot" });
     const file = try std.fs.cwd().createFile(file_path, .{});
-    var fw = file.writer();
+    var file_buffer: [1024]u8 = undefined;
+    var fw = file.writer(&file_buffer);
 
-    try fw.print("strict digraph G {{", .{});
+    try fw.interface.print("strict digraph G {{", .{});
     var it = self.links.iterator();
     while (it.next()) |e| {
         const u = e.key_ptr.*;
-        try fw.print("\n  {s} -> {{", .{u});
+        try fw.interface.print("\n  {s} -> {{", .{u});
         var v_it = e.value_ptr.iterator();
         while (v_it.next()) |v| {
-            try fw.print("{s} ", .{v.*});
+            try fw.interface.print("{s} ", .{v.*});
         }
-        try fw.print("}}", .{});
+        try fw.interface.print("}}", .{});
     }
-    try fw.print("\n}}", .{});
+    try fw.interface.print("\n}}", .{});
 
     // Try to run 'dot' command to compile .dot file to svg
     var child_process = std.process.Child.init(&[_][]const u8{ "dot", "-Tsvg", file_path, "-o", "graph.svg" }, allocator);

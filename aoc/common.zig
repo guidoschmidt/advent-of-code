@@ -21,7 +21,13 @@ pub fn printTime(time: u64) void {
 
 pub const PuzzleInput = enum { EXAMPLE, PUZZLE };
 
-pub fn runPart(allocator: std.mem.Allocator, comptime year: u16, comptime day: u8, input_type: PuzzleInput, comptime part_fn: fn (allocator: Allocator, input: []const u8) anyerror!void) !void {
+pub fn runPart(
+    allocator: std.mem.Allocator,
+    comptime year: u16,
+    comptime day: u8,
+    input_type: PuzzleInput,
+    comptime part_fn: fn (allocator: Allocator, input: []const u8) anyerror!void,
+) !void {
     const input = switch (input_type) {
         .PUZZLE => try puzzle_input.getPuzzleInput(allocator, day, year),
         .EXAMPLE => try puzzle_input.getExampleInput(allocator, day, year),
@@ -32,19 +38,27 @@ pub fn runPart(allocator: std.mem.Allocator, comptime year: u16, comptime day: u
     printTime(time);
 }
 
-pub fn runDay(allocator: std.mem.Allocator, year: u16, day: u8, input_type: PuzzleInput, comptime part1: fn (allocator: Allocator, input: []const u8) anyerror!void, comptime part2: fn (allocator: Allocator, input: []const u8) anyerror!void) !void {
+pub fn runDay(
+    allocator: std.mem.Allocator,
+    comptime year: u16,
+    comptime day: u8,
+    input_type: PuzzleInput,
+    comptime part1: fn (allocator: Allocator, input: []const u8) anyerror!void,
+    comptime part2: fn (allocator: Allocator, input: []const u8) anyerror!void,
+) !void {
     try runPart(allocator, year, day, input_type, part1);
     try runPart(allocator, year, day, input_type, part2);
 }
 
 pub fn blockAskForNext() void {
     step: {
-        const in = std.io.getStdIn();
-        var buf = std.io.bufferedReader(in.reader());
-        var r = buf.reader();
-        std.debug.print("\n\nNext?... ", .{});
-        var msg_buf: [4096]u8 = undefined;
-        _ = r.readUntilDelimiterOrEof(&msg_buf, '\n') catch unreachable;
+        var reader_buffer: [10]u8 = undefined;
+        var reader = std.fs.File.stdin().readerStreaming(&reader_buffer);
+        std.debug.print("\n\n→ Step: [Enter]", .{});
+        var writter_buffer: [10]u8 = undefined;
+        var writer = std.fs.File.stdout().writerStreaming(&writter_buffer);
+        _ = reader.interface.streamDelimiter(&writer.interface, '\n') catch return;
+        _ = reader.interface.takeByte() catch return;
         break :step;
     }
 }

@@ -20,12 +20,7 @@ const Pos = struct {
     y: i32,
 };
 
-const Dir = enum {
-    NORTH,
-    EAST,
-    SOUTH,
-    WEST
-};
+const Dir = enum { NORTH, EAST, SOUTH, WEST };
 
 fn isInside(pos: Pos, cols: u32, rows: u32) bool {
     _ = rows;
@@ -37,7 +32,7 @@ fn isInside(pos: Pos, cols: u32, rows: u32) bool {
 }
 
 fn tileToArrow(tile: u8) []const u8 {
-    return switch(tile) {
+    return switch (tile) {
         // vertical pipe connecting north and south
         '|' => "┃",
         // horizontal pipe connecting east and west
@@ -54,21 +49,21 @@ fn tileToArrow(tile: u8) []const u8 {
         'Q' => "\x1B[32m●\x1B[0m",
         INSIDE => "\x1B[33m●\x1B[0m",
         OUTSIDE => "\x1B[34m●\x1B[0m",
-        else => "?"
+        else => "?",
     };
 }
 
 fn printArrowTile(tile: u8) void {
-    std.debug.print("{s}", .{ tileToArrow(tile) }); 
+    std.debug.print("{s}", .{tileToArrow(tile)});
 }
 
 fn printDefaultTile(tile: u8) void {
-    std.debug.print("{c}", .{ tile }); 
+    std.debug.print("{c}", .{tile});
 }
 
-fn animateMap(pipe_map: *[]u8, rows: u32, cols: u32, comptime print_fn: fn(u8) void) void {
-    for(0..rows) |dy| {
-        for(0..cols) |dx| {
+fn animateMap(pipe_map: *[]u8, rows: u32, cols: u32, comptime print_fn: fn (u8) void) void {
+    for (0..rows) |dy| {
+        for (0..cols) |dx| {
             const idx = dy * cols + dx;
             const pipe_tile = pipe_map.*[idx];
             std.debug.print("\x1B[{d};{d}H", .{ dy, dx });
@@ -78,10 +73,10 @@ fn animateMap(pipe_map: *[]u8, rows: u32, cols: u32, comptime print_fn: fn(u8) v
     std.time.sleep(1000 * 1000 * 16);
 }
 
-fn printMap(name: []const u8, map: *[]u8, rows: u32, cols: u32, comptime print_fn: fn(u8) void) void {
-    std.debug.print("\n{s}:\n", .{ name });
-    for(0..rows) |dy| {
-        for(0..cols) |dx| {
+fn printMap(name: []const u8, map: *[]u8, rows: u32, cols: u32, comptime print_fn: fn (u8) void) void {
+    std.debug.print("\n{s}:\n", .{name});
+    for (0..rows) |dy| {
+        for (0..cols) |dx| {
             const idx = dy * cols + dx;
             const pipe_tile = map.*[idx];
             print_fn(pipe_tile);
@@ -92,32 +87,32 @@ fn printMap(name: []const u8, map: *[]u8, rows: u32, cols: u32, comptime print_f
 
 fn printDistMap(map: *[]i32, rows: u32, cols: u32) void {
     std.debug.print("\nDISTANCE MAP:\n", .{});
-    for(0..rows) |dy| {
-        for(0..cols) |dx| {
+    for (0..rows) |dy| {
+        for (0..cols) |dx| {
             const idx = dy * cols + dx;
             const dist_val = map.*[idx];
             switch (dist_val) {
-                1 => std.debug.print("{s}", .{ "P" }),
-                0 => std.debug.print("{c}", .{ ' ' }),
-                7 => std.debug.print("{c}", .{ 'I' }),
-                8 => std.debug.print("{c}", .{ 'O' }),
-                9 => std.debug.print("{c}", .{ '_' }),
+                1 => std.debug.print("{s}", .{"P"}),
+                0 => std.debug.print("{c}", .{' '}),
+                7 => std.debug.print("{c}", .{'I'}),
+                8 => std.debug.print("{c}", .{'O'}),
+                9 => std.debug.print("{c}", .{'_'}),
                 else => {
                     if (dist_val < 0) {
-                        std.debug.print("{c}", .{ '.' });
+                        std.debug.print("{c}", .{'.'});
                     }
-                }
+                },
             }
         }
         std.debug.print("\n", .{});
     }
 }
 
-fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []const u8, pipe_map: *[]u8, inside_candidates: *std.ArrayList(Pos), outside_candidates: *std.ArrayList(Pos)) void {
+fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []const u8, pipe_map: *[]u8, inside_candidates: *std.array_list.Managed(Pos), outside_candidates: *std.array_list.Managed(Pos)) void {
     var next_position = pos;
     var next_dir = direction;
 
-    loop: while(true) {
+    loop: while (true) {
 
         // animateMap(pipe_map, rows, cols, printArrowTile);
 
@@ -134,14 +129,14 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
         if (next_pos.x < 0 or next_pos.x > cols - 1 or next_pos.y < 0 or next_pos.y > rows - 1) continue;
 
         const pos_idx = next_pos.y * @as(i32, @intCast(cols)) + next_pos.x;
-        if (input_map[@intCast(pos_idx)] != '.' and dist_map[@intCast(pos_idx)] < 0 ) {
+        if (input_map[@intCast(pos_idx)] != '.' and dist_map[@intCast(pos_idx)] < 0) {
             dist_map[@intCast(pos_idx)] = 1; //@intCast(next_step);
             pipe_map.*[@intCast(pos_idx)] = input_map[@intCast(pos_idx)];
         }
 
         // Find left position
-        var left_pos = Pos { .x = next_pos.x, .y = next_pos.y };
-        var right_pos = Pos { .x = next_pos.x, .y = next_pos.y };
+        var left_pos = Pos{ .x = next_pos.x, .y = next_pos.y };
+        var right_pos = Pos{ .x = next_pos.x, .y = next_pos.y };
         switch (current_dir) {
             Dir.NORTH => {
                 left_pos.x -= 1;
@@ -175,7 +170,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
             }
         }
         if (input_map[@intCast(pos_idx)] == 'F') {
-            const left_pos2 = Pos { .x = next_pos.x - 1, .y = next_pos.y };
+            const left_pos2 = Pos{ .x = next_pos.x - 1, .y = next_pos.y };
             if (left_pos2.x >= 0 and left_pos2.x < cols and left_pos2.y >= 0 and left_pos2.y < rows) {
                 const left_pos2_idx = left_pos2.y * @as(i32, @intCast(cols)) + left_pos2.x;
                 if (dist_map[@intCast(left_pos2_idx)] < 0) {
@@ -183,7 +178,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
                     // inside_candidates.append(left_pos2) catch unreachable;
                 }
             }
-            const left_diagonal_pos = Pos { .x = next_pos.x - 1, .y = next_pos.y - 1 };
+            const left_diagonal_pos = Pos{ .x = next_pos.x - 1, .y = next_pos.y - 1 };
             if (left_diagonal_pos.x >= 0 and left_diagonal_pos.x < cols and left_pos.y >= 0 and left_diagonal_pos.y < rows) {
                 const left_diagonal_pos_idx = left_diagonal_pos.y * @as(i32, @intCast(cols)) + left_diagonal_pos.x;
                 if (left_diagonal_pos_idx > 0 and left_diagonal_pos_idx < dist_map.len and dist_map[@intCast(left_diagonal_pos_idx)] < 0) {
@@ -193,7 +188,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
             }
         }
         if (input_map[@intCast(pos_idx)] == 'J') {
-            const left_pos2 = Pos { .x = next_pos.x + 1, .y = next_pos.y - 1 };
+            const left_pos2 = Pos{ .x = next_pos.x + 1, .y = next_pos.y - 1 };
             if (left_pos2.x >= 0 and left_pos2.x < cols and left_pos2.y >= 0 and left_pos2.y < rows) {
                 const left_pos2_idx = left_pos2.y * @as(i32, @intCast(cols)) + left_pos2.x;
                 if (dist_map[@intCast(left_pos2_idx)] < 0) {
@@ -201,7 +196,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
                     inside_candidates.append(left_pos2) catch unreachable;
                 }
             }
-            const left_diagonal_pos = Pos { .x = next_pos.x, .y = next_pos.y + 1 };
+            const left_diagonal_pos = Pos{ .x = next_pos.x, .y = next_pos.y + 1 };
             if (left_diagonal_pos.x >= 0 and left_diagonal_pos.x < cols and left_pos.y >= 0 and left_diagonal_pos.y < rows) {
                 const left_diagonal_pos_idx = left_diagonal_pos.y * @as(i32, @intCast(cols)) + left_diagonal_pos.x;
                 if (dist_map[@intCast(left_diagonal_pos_idx)] < 0) {
@@ -211,7 +206,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
             }
         }
         if (input_map[@intCast(pos_idx)] == '7') {
-            const left_pos2 = Pos { .x = next_pos.x + 1, .y = next_pos.y };
+            const left_pos2 = Pos{ .x = next_pos.x + 1, .y = next_pos.y };
             if (left_pos2.x >= 0 and left_pos2.x < cols and left_pos2.y >= 0 and left_pos2.y < rows) {
                 const left_pos2_idx = left_pos2.y * @as(i32, @intCast(cols)) + left_pos2.x;
                 if (dist_map[@intCast(left_pos2_idx)] < 0) {
@@ -219,7 +214,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
                     inside_candidates.append(left_pos2) catch unreachable;
                 }
             }
-            const left_diagonal_pos = Pos { .x = next_pos.x + 1, .y = next_pos.y - 1 };
+            const left_diagonal_pos = Pos{ .x = next_pos.x + 1, .y = next_pos.y - 1 };
             if (left_diagonal_pos.x >= 0 and left_diagonal_pos.x < cols and left_pos.y >= 0 and left_diagonal_pos.y < rows) {
                 const left_diagonal_pos_idx = left_diagonal_pos.y * @as(i32, @intCast(cols)) + left_diagonal_pos.x;
                 if (left_diagonal_pos_idx > 0 and left_diagonal_pos_idx < dist_map.len and dist_map[@intCast(left_diagonal_pos_idx)] < 0) {
@@ -229,7 +224,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
             }
         }
         if (input_map[@intCast(pos_idx)] == 'L') {
-            const left_pos2 = Pos { .x = next_pos.x - 1, .y = next_pos.y };
+            const left_pos2 = Pos{ .x = next_pos.x - 1, .y = next_pos.y };
             if (left_pos2.x >= 0 and left_pos2.x < cols and left_pos2.y >= 0 and left_pos2.y < rows) {
                 const left_pos2_idx = left_pos2.y * @as(i32, @intCast(cols)) + left_pos2.x;
                 if (dist_map[@intCast(left_pos2_idx)] < 0) {
@@ -237,7 +232,7 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
                     inside_candidates.append(left_pos2) catch unreachable;
                 }
             }
-            const left_diagonal_pos = Pos { .x = next_pos.x - 1, .y = next_pos.y + 1 };
+            const left_diagonal_pos = Pos{ .x = next_pos.x - 1, .y = next_pos.y + 1 };
             if (left_diagonal_pos.x >= 0 and left_diagonal_pos.x < cols and left_pos.y >= 0 and left_diagonal_pos.y < rows) {
                 const left_diagonal_pos_idx = left_diagonal_pos.y * @as(i32, @intCast(cols)) + left_diagonal_pos.x;
                 if (dist_map[@intCast(left_diagonal_pos_idx)] < 0) {
@@ -252,7 +247,6 @@ fn findInsides(pos: Pos, direction: Dir, cols: u32, rows: u32, input_map: []cons
         next_dir = findNextDir(next_pos, cols, rows, input_map) orelse break :loop;
     }
 }
-
 
 fn follow(step: u32, pos: *[2]Pos, directions: []Dir, cols: u32, rows: u32, input_map: []const u8, pipe_map: *[]u8) void {
     var next_positions = pos;
@@ -275,7 +269,7 @@ fn follow(step: u32, pos: *[2]Pos, directions: []Dir, cols: u32, rows: u32, inpu
             if (next_pos.x < 0 or next_pos.x > cols - 1 or next_pos.y < 0 or next_pos.y > rows - 1) continue;
 
             const pos_idx = next_pos.y * @as(i32, @intCast(cols)) + next_pos.x;
-            if (input_map[@intCast(pos_idx)] != '.' and dist_map[@intCast(pos_idx)] < 0 ) {
+            if (input_map[@intCast(pos_idx)] != '.' and dist_map[@intCast(pos_idx)] < 0) {
                 dist_map[@intCast(pos_idx)] = 1; //@intCast(next_step);
                 pipe_map.*[@intCast(pos_idx)] = input_map[@intCast(pos_idx)];
             }
@@ -284,10 +278,10 @@ fn follow(step: u32, pos: *[2]Pos, directions: []Dir, cols: u32, rows: u32, inpu
             const next_dir = findNextDir(next_pos, cols, rows, input_map) orelse break :loop;
             next_dirs[i] = next_dir;
         }
-        next_step+=1;
+        next_step += 1;
     }
 
-    std.debug.print("\n\nResult: {}\n", .{ next_step });
+    std.debug.print("\n\nResult: {}\n", .{next_step});
 }
 
 fn findNextDir(current_pos: Pos, cols: u32, rows: u32, pipe_map: []const u8) ?Dir {
@@ -296,7 +290,7 @@ fn findNextDir(current_pos: Pos, cols: u32, rows: u32, pipe_map: []const u8) ?Di
     const dirs = [4]Dir{ Dir.NORTH, Dir.EAST, Dir.SOUTH, Dir.WEST };
     for (dirs) |dir| {
         var test_pos = current_pos;
-        switch(dir) {
+        switch (dir) {
             Dir.NORTH => test_pos.y -= 1,
             Dir.EAST => test_pos.x += 1,
             Dir.SOUTH => test_pos.y += 1,
@@ -305,55 +299,55 @@ fn findNextDir(current_pos: Pos, cols: u32, rows: u32, pipe_map: []const u8) ?Di
         const current_pos_idx = current_pos.y * @as(i32, @intCast(cols)) + current_pos.x;
         const test_pos_idx = test_pos.y * @as(i32, @intCast(cols)) + test_pos.x;
         if (test_pos.x >= 0 and test_pos.y >= 0 and test_pos.x < cols and test_pos.y < rows and
-            dist_map[@intCast(test_pos_idx)] < 0) {
+            dist_map[@intCast(test_pos_idx)] < 0)
+        {
             const current_tile = pipe_map[@intCast(current_pos_idx)];
             const next_tile = pipe_map[@intCast(test_pos_idx)];
             if (next_tile == '.') continue;
             // std.debug.print("\n      ??? {any} : {c} → {c}", .{ dir, current_tile, next_tile });
-            switch(dir) {
+            switch (dir) {
                 Dir.NORTH => {
                     // Think of it like:
                     // On which tile can we go into the given direction?
-                    switch(current_tile) {
-                        '|','J','L' => next_dir = Dir.NORTH,
-                        else => {}
-                    } 
+                    switch (current_tile) {
+                        '|', 'J', 'L' => next_dir = Dir.NORTH,
+                        else => {},
+                    }
                 },
                 Dir.EAST => {
-                    switch(current_tile) {
-                        'F','L','-' => next_dir = Dir.EAST,
-                        else => {}
-                    } 
+                    switch (current_tile) {
+                        'F', 'L', '-' => next_dir = Dir.EAST,
+                        else => {},
+                    }
                 },
                 Dir.SOUTH => {
-                    switch(current_tile) {
-                        '|','F','7' => next_dir = Dir.SOUTH,
-                        else => {}
-                    } 
+                    switch (current_tile) {
+                        '|', 'F', '7' => next_dir = Dir.SOUTH,
+                        else => {},
+                    }
                 },
                 Dir.WEST => {
-                    switch(current_tile) {
+                    switch (current_tile) {
                         '-', '7', 'J' => next_dir = Dir.WEST,
-                        else => {}
-                    } 
-                }
+                        else => {},
+                    }
+                },
             }
         }
     }
     // std.debug.print("\n   {any} ⟶  {any}", .{ current_dir, next_dir });
     return next_dir;
-
 }
 
-fn findStartDirections(allocator: Allocator, pos: Pos, cols: u32, input_map: []const u8, pipe_map: *[]u8) std.ArrayList(Dir) {
+fn findStartDirections(allocator: Allocator, pos: Pos, cols: u32, input_map: []const u8, pipe_map: *[]u8) std.array_list.Managed(Dir) {
     const pos_idx = pos.y * @as(i32, @intCast(cols)) + pos.x;
-    if (input_map[@intCast(pos_idx)] != '.' and dist_map[@intCast(pos_idx)] < 0 ) {
+    if (input_map[@intCast(pos_idx)] != '.' and dist_map[@intCast(pos_idx)] < 0) {
         dist_map[@intCast(pos_idx)] = 1; //@intCast(step);
         pipe_map.*[@intCast(pos_idx)] = input_map[@intCast(pos_idx)];
     }
 
-    var start_directions = std.ArrayList(Dir).init(allocator);
-    inline for(std.meta.fields(Dir)) |d| {
+    var start_directions = std.array_list.Managed(Dir).init(allocator);
+    inline for (std.meta.fields(Dir)) |d| {
         var test_pos = pos;
         const dir = @as(Dir, @enumFromInt(d.value));
         switch (dir) {
@@ -380,20 +374,20 @@ fn findStartDirections(allocator: Allocator, pos: Pos, cols: u32, input_map: []c
     }
 
     std.debug.print("\nFollow directions on start:", .{});
-    for(start_directions.items) |follow_dir| {
-        std.debug.print("\n→ {any}", .{ follow_dir });
+    for (start_directions.items) |follow_dir| {
+        std.debug.print("\n→ {any}", .{follow_dir});
     }
     std.debug.print("\n", .{});
 
-    return start_directions ;
+    return start_directions;
 }
 
-fn findStart(cols: u32, input_map: []u8, pipe_map: []u8)  void {
+fn findStart(cols: u32, input_map: []u8, pipe_map: []u8) void {
     var y: i32 = 0;
-    start = Pos{.x=0, .y=0};
-    while(row_it.next()) |row| : (y += 1) {
+    start = Pos{ .x = 0, .y = 0 };
+    while (row_it.next()) |row| : (y += 1) {
         // std.debug.print("\n{s}", .{ row });
-        for(0..row.len) |x| {
+        for (0..row.len) |x| {
             const idx = @as(u32, @intCast(y)) * cols + @as(u32, @intCast(x));
             const tile = row[x];
             input_map[idx] = tile;
@@ -409,7 +403,7 @@ fn findStart(cols: u32, input_map: []u8, pipe_map: []u8)  void {
 }
 
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    row_it = std.mem.tokenize(u8, input, "\n\r");
+    row_it = std.mem.tokenizeAny(u8, input, "\n\r");
     col_count = @intCast(row_it.peek().?.len);
     row_count = @as(u32, @intCast(row_it.buffer.len)) / (col_count + 1);
 
@@ -431,33 +425,34 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     // printDistMap(&dist_map, row_count, col_count);
 }
 
-fn floodFill(allocator: Allocator, candidates: *std.ArrayList(Pos), pipe_map: []u8, map_number: u8, map_char: u8) void {
-    var q = std.ArrayList(Pos).init(allocator);
+fn floodFill(allocator: Allocator, candidates: *std.array_list.Managed(Pos), pipe_map: []u8, map_number: u8, map_char: u8) void {
+    var q = std.array_list.Managed(Pos).init(allocator);
     q.appendSlice(candidates.items) catch unreachable;
-    while(q.items.len > 0) {
-        const elem = q.pop();
+    while (q.items.len > 0) {
         // std.debug.print("\n{d} x {d}", .{ elem.x, elem.y });
-        const is_inside = isInside(elem, col_count, row_count);
-        if (is_inside) {
-            const idx = @as(usize, @intCast(elem.y)) * col_count + @as(usize, @intCast(elem.x));
-            dist_map[idx] = map_number;
-            pipe_map[idx] = map_char;
+        if (q.pop()) |elem| {
+            const is_inside = isInside(elem, col_count, row_count);
+            if (is_inside) {
+                const idx = @as(usize, @intCast(elem.y)) * col_count + @as(usize, @intCast(elem.x));
+                dist_map[idx] = map_number;
+                pipe_map[idx] = map_char;
 
-            const right = Pos{.x = @intCast(@min(@as(u32, @intCast(elem.x + 1)), row_count + 1)), .y = elem.y };
-            const bottom = Pos{.x = elem.x, .y = @intCast(@min(@as(u32, @intCast(elem.y + 1)), row_count - 1)) };
-            const left = Pos{.x = @intCast(@max(@as(i32, @intCast(elem.x - 1)), 0)), .y = elem.y };
-            const top = Pos{.x = elem.x, .y = @intCast(@max(@as(i32, @intCast(elem.y - 1)), 0)) };
+                const right = Pos{ .x = @intCast(@min(@as(u32, @intCast(elem.x + 1)), row_count + 1)), .y = elem.y };
+                const bottom = Pos{ .x = elem.x, .y = @intCast(@min(@as(u32, @intCast(elem.y + 1)), row_count - 1)) };
+                const left = Pos{ .x = @intCast(@max(@as(i32, @intCast(elem.x - 1)), 0)), .y = elem.y };
+                const top = Pos{ .x = elem.x, .y = @intCast(@max(@as(i32, @intCast(elem.y - 1)), 0)) };
 
-            q.append(right) catch unreachable;
-            q.append(bottom) catch unreachable;
-            q.append(left) catch unreachable;
-            q.append(top) catch unreachable;
+                q.append(right) catch unreachable;
+                q.append(bottom) catch unreachable;
+                q.append(left) catch unreachable;
+                q.append(top) catch unreachable;
+            }
         }
     }
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    row_it = std.mem.tokenize(u8, input, "\n\r");
+    row_it = std.mem.tokenizeAny(u8, input, "\n\r");
     col_count = @intCast(row_it.peek().?.len);
     row_count = @as(u32, @intCast(row_it.buffer.len)) / (col_count + 1);
 
@@ -472,8 +467,8 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     const start_directions = findStartDirections(allocator, start, col_count, input_map, &pipe_map);
     const start_position = start;
 
-    var inside_candidates = std.ArrayList(Pos).init(allocator);
-    var outside_candidates = std.ArrayList(Pos).init(allocator);
+    var inside_candidates = std.array_list.Managed(Pos).init(allocator);
+    var outside_candidates = std.array_list.Managed(Pos).init(allocator);
     findInsides(start_position, start_directions.items[0], col_count, row_count, input_map, &pipe_map, &inside_candidates, &outside_candidates);
 
     floodFill(allocator, &outside_candidates, pipe_map, 7, INSIDE);
@@ -483,18 +478,17 @@ fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     // printMap("PIPE MAP", &pipe_map, row_count, col_count, printArrowTile);
     // printDistMap(&dist_map, row_count, col_count);
 
-    var missing_candidates = std.ArrayList(Pos).init(allocator);
-    for(0..row_count) |y| {
-        for(0..col_count) |x| {
+    var missing_candidates = std.array_list.Managed(Pos).init(allocator);
+    for (0..row_count) |y| {
+        for (0..col_count) |x| {
             const idx = y * @as(u32, @intCast(col_count)) + x;
             if (dist_map[@intCast(idx)] < 0)
-                missing_candidates.append(Pos{.x = @intCast(x), .y = @intCast(y)}) catch unreachable;
-        }     
+                missing_candidates.append(Pos{ .x = @intCast(x), .y = @intCast(y) }) catch unreachable;
+        }
     }
 
-
     var count_inside: u32 = 0;
-    for(0..dist_map.len) |i| {
+    for (0..dist_map.len) |i| {
         if (dist_map[i] == 7)
             count_inside += 1;
     }
