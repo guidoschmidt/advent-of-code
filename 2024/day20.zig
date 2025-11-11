@@ -1,7 +1,7 @@
 const std = @import("std");
 const aoc = @import("aoc");
 const t = @import("term");
-const VectorSet = @import("./VectorSet.zig").VectorSet;
+const VectorSet = @import("datastructures").VectorSet;
 
 const DAY: u8 = 20;
 const Allocator = std.mem.Allocator;

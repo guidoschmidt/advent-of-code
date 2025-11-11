@@ -9,7 +9,15 @@ const BuildTargetResults = struct {
     tests: *std.Build.Step.Compile,
 };
 
-fn createBuildTarget(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, aoc_module: *std.Build.Module, libs: *std.StringHashMap(*std.Build.Module), year: u16, day: usize) !BuildTargetResults {
+fn createBuildTarget(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    aoc_module: *std.Build.Module,
+    libs: *std.StringHashMap(*std.Build.Module),
+    year: u16,
+    day: usize,
+) !BuildTargetResults {
     var src_buf: [32]u8 = undefined;
     const source_file = try std.fmt.bufPrint(&src_buf, "{d}/day{d}.zig", .{ year, day });
 
@@ -66,7 +74,7 @@ pub fn build(b: *std.Build) !void {
 
     var libs = std.StringHashMap(*std.Build.Module).init(b.allocator);
 
-    const lib_names = .{ "ppm", "math", "svg", "term" };
+    const lib_names = .{ "ppm", "math", "svg", "term", "datastructures" };
     inline for (0..lib_names.len) |i| {
         const lib_name = lib_names[i];
         const module = b.addModule(lib_name, .{
