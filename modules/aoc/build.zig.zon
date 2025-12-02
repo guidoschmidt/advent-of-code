@@ -1,0 +1,19 @@
+.{
+    .name = .aoc,
+    .fingerprint = 0x808a3f8f28be9351,
+    .version = "0.0.2",
+    .minimum_zig_version = "0.15.2",
+    .dependencies = .{
+        .zeit = .{
+            .url = "git+https://github.com/rockorager/zeit#b01d40568edc0b1c1a2ec0692619449a2a39c718",
+            .hash = "zeit-0.6.0-5I6bk05_AgAUb00ViMy0zAkEf4N38JCSUUrjCW4s-haJ",
+        },
+    },
+    .paths = .{
+        "README.md",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "modules",
+    },
+}
