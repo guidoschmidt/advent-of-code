@@ -10,13 +10,13 @@ const log = std.log;
 fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     _ = allocator;
     _ = input;
-    std.debug.print("--- INPUT---\n{s}\n------------\n", .{@embedFile("puzzle")});
+    std.debug.print("--- INPUT---\n{s}\n------------\n", .{@embedFile("puzzle-$DAY")});
 }
 
 fn part2(allocator: Allocator, input: []const u8) anyerror!void {
     _ = allocator;
     _ = input;
-    std.debug.print("--- INPUT---\n{s}\n------------\n", .{@embedFile("puzzle")});
+    std.debug.print("--- INPUT---\n{s}\n------------\n", .{@embedFile("puzzle-$DAY")});
 }
 
 pub fn main() !void {

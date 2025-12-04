@@ -1,6 +1,6 @@
 .{
-    .name = .aoc,
-    .fingerprint = 0x808a3f8f28be9351,
+    .name = .aoc_libs,
+    .fingerprint = 0x988ff719da89c27e,
     .version = "0.0.2",
     .minimum_zig_version = "0.15.2",
     .dependencies = .{},
