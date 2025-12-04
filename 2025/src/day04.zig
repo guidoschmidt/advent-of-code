@@ -1,5 +1,6 @@
 const std = @import("std");
 const aoc = @import("aoc");
+const term = @import("libs").term;
 
 const YEAR: u12 = 2025;
 const DAY: u5 = 4;
@@ -40,12 +41,17 @@ fn findAccessibleRolls(map: []u8, rows: usize, cols: usize) !usize {
     }
 
     // --- Print the map to visualise what's going on
-    // for (0..cols) |_x| {
-    //     for (0..rows) |_y| {
-    //         std.debug.print("{c} ", .{map[(_x * rows) + _y]});
-    //     }
-    //     std.debug.print("\n", .{});
-    // }
+    for (0..cols) |_x| {
+        for (0..rows) |_y| {
+            const m = map[(_x * rows) + _y];
+            std.debug.print("{s}{c}{s} ", .{
+                if (m == '@') term.red else term.clear,
+                m,
+                term.clear,
+            });
+        }
+        std.debug.print("\n", .{});
+    }
 
     return result;
 }

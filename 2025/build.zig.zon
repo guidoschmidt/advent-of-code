@@ -5,6 +5,7 @@
     .minimum_zig_version = "0.15.2",
     .dependencies = .{
         .aoc = .{ .path = "../modules/aoc" },
+        .libs = .{ .path = "../modules/libs" },
     },
     .paths = .{
         "README.md",

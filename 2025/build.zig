@@ -28,8 +28,17 @@ pub fn build(b: *std.Build) !void {
     defer b.allocator.free(arg_year);
     const arg_day = try std.fmt.allocPrint(b.allocator, "{d}", .{DAY});
     defer b.allocator.free(arg_day);
+    const puzzle_input_filename = try std.fmt.allocPrint(b.allocator, "day{d:0>2}", .{DAY});
+    defer b.allocator.free(puzzle_input_filename);
+    const arg_puzzle_path = try std.fs.path.join(b.allocator, &.{
+        "input",
+        "puzzle",
+        puzzle_input_filename,
+    });
+    defer b.allocator.free(arg_puzzle_path);
     cmd.addArg(arg_year);
     cmd.addArg(arg_day);
+    cmd.addArg(arg_puzzle_path);
     const captured_output = cmd.captureStdOut(); // use this as anonymous import
 
     const src_name = try std.fmt.allocPrint(b.allocator, "day{d:0>2}.zig", .{DAY});
@@ -59,13 +68,44 @@ pub fn build(b: *std.Build) !void {
     });
     b.installArtifact(exe);
 
-    exe.root_module.addAnonymousImport("puzzle", .{ .root_source_file = captured_output });
+    const puzzle_input_name = try std.fmt.allocPrint(b.allocator, "puzzle-{d:0>2}", .{DAY});
+    defer b.allocator.free(puzzle_input_name);
+    exe.root_module.addAnonymousImport(puzzle_input_name, .{
+        .root_source_file = captured_output,
+    });
+    const expample_input_name = try std.fmt.allocPrint(b.allocator, "example-{d:0>2}", .{DAY});
+    defer b.allocator.free(expample_input_name);
+    const expample_input_file_name = try std.fmt.allocPrint(b.allocator, "day{d:0>2}", .{DAY});
+    defer b.allocator.free(expample_input_name);
+    const example_input_file_path = try std.fs.path.join(b.allocator, &.{ "input", "example", expample_input_file_name });
+    defer b.allocator.free(example_input_file_path);
+    exe.root_module.addAnonymousImport(expample_input_name, .{
+        .root_source_file = b.path(example_input_file_path),
+    });
 
     exe.root_module.addImport("aoc", dep_aoc.module("aoc"));
+
+    const dep_libs = b.dependency("libs", .{});
+    exe.root_module.addImport("libs", dep_libs.module("libs"));
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
 
     const run_step = b.step("run", "Start the program");
     run_step.dependOn(&run_cmd.step);
+
+    // Tests
+    const tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(src_path),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    tests.root_module.addAnonymousImport(expample_input_name, .{
+        .root_source_file = b.path(example_input_file_path),
+    });
+    const run_tests = b.addRunArtifact(tests);
+    const test_step = b.step("test", "Run tests");
+    test_step.dependOn(&run_tests.step);
 }
