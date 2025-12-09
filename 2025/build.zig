@@ -21,25 +21,40 @@ pub fn build(b: *std.Build) !void {
 
     const dep_aoc = b.dependency("aoc", .{});
     const aoc_puzzleinput = dep_aoc.artifact("puzzle-input-helper");
-    std.debug.print("{any}\n", .{@TypeOf(aoc_puzzleinput)});
 
-    const cmd = b.addRunArtifact(aoc_puzzleinput);
     const arg_year = try std.fmt.allocPrint(b.allocator, "{d}", .{YEAR});
     defer b.allocator.free(arg_year);
+
     const arg_day = try std.fmt.allocPrint(b.allocator, "{d}", .{DAY});
     defer b.allocator.free(arg_day);
-    const puzzle_input_filename = try std.fmt.allocPrint(b.allocator, "day{d:0>2}", .{DAY});
-    defer b.allocator.free(puzzle_input_filename);
-    const arg_puzzle_path = try std.fs.path.join(b.allocator, &.{
-        "input",
-        "puzzle",
-        puzzle_input_filename,
+
+    const arg_input_type_puzzle = try std.fmt.allocPrint(b.allocator, "{d}", .{
+        @intFromEnum(aoc.types.PuzzleInput.PUZZLE),
     });
-    defer b.allocator.free(arg_puzzle_path);
-    cmd.addArg(arg_year);
-    cmd.addArg(arg_day);
-    cmd.addArg(arg_puzzle_path);
-    const captured_output = cmd.captureStdOut(); // use this as anonymous import
+    defer b.allocator.free(arg_input_type_puzzle);
+
+    const arg_input_type_example = try std.fmt.allocPrint(b.allocator, "{d}", .{
+        @intFromEnum(aoc.types.PuzzleInput.EXAMPLE),
+    });
+    defer b.allocator.free(arg_input_type_puzzle);
+
+    const cmd_puzzle_input = b.addRunArtifact(aoc_puzzleinput);
+    cmd_puzzle_input.addArgs(&.{
+        arg_input_type_puzzle,
+        arg_year,
+        arg_day,
+        "input",
+    });
+    const captured_output_puzzle = cmd_puzzle_input.captureStdOut(); // use this as anonymous import
+
+    const cmd_example_input = b.addRunArtifact(aoc_puzzleinput);
+    cmd_example_input.addArgs(&.{
+        arg_input_type_example,
+        arg_year,
+        arg_day,
+        "input",
+    });
+    const captured_output_example = cmd_example_input.captureStdOut(); // use this as anonymous import
 
     const src_name = try std.fmt.allocPrint(b.allocator, "day{d:0>2}.zig", .{DAY});
     defer b.allocator.free(src_name);
@@ -50,7 +65,7 @@ pub fn build(b: *std.Build) !void {
 
     _ = std.fs.cwd().openFile(src_path, .{}) catch {
         std.debug.print("{s} not found. Creating from template...\n", .{src_path});
-        const contents = try aoc.createTemplate(b.allocator, YEAR, DAY);
+        const contents = try aoc.createTemplate(b.allocator, DAY);
         defer b.allocator.free(contents);
         std.debug.print("{s}\n", .{contents});
         const src_file = try std.fs.cwd().createFile(src_path, .{});
@@ -71,16 +86,13 @@ pub fn build(b: *std.Build) !void {
     const puzzle_input_name = try std.fmt.allocPrint(b.allocator, "puzzle-{d:0>2}", .{DAY});
     defer b.allocator.free(puzzle_input_name);
     exe.root_module.addAnonymousImport(puzzle_input_name, .{
-        .root_source_file = captured_output,
+        .root_source_file = captured_output_puzzle,
     });
-    const expample_input_name = try std.fmt.allocPrint(b.allocator, "example-{d:0>2}", .{DAY});
-    defer b.allocator.free(expample_input_name);
-    const expample_input_file_name = try std.fmt.allocPrint(b.allocator, "day{d:0>2}", .{DAY});
-    defer b.allocator.free(expample_input_name);
-    const example_input_file_path = try std.fs.path.join(b.allocator, &.{ "input", "example", expample_input_file_name });
-    defer b.allocator.free(example_input_file_path);
-    exe.root_module.addAnonymousImport(expample_input_name, .{
-        .root_source_file = b.path(example_input_file_path),
+
+    const example_input_name = try std.fmt.allocPrint(b.allocator, "example-{d:0>2}", .{DAY});
+    defer b.allocator.free(puzzle_input_name);
+    exe.root_module.addAnonymousImport(example_input_name, .{
+        .root_source_file = captured_output_example,
     });
 
     exe.root_module.addImport("aoc", dep_aoc.module("aoc"));
@@ -102,9 +114,9 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
         }),
     });
-    tests.root_module.addAnonymousImport(expample_input_name, .{
-        .root_source_file = b.path(example_input_file_path),
-    });
+    // tests.root_module.addAnonymousImport(example_input_name, .{
+    //     .root_source_file = b.path(example_input_name),
+    // });
     const run_tests = b.addRunArtifact(tests);
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_tests.step);

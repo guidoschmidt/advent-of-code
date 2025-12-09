@@ -19,15 +19,60 @@ pub fn main() !void {
     defer args.deinit();
     _ = args.next(); // binary name
 
-    if (args.inner.count < 3) {
+    if (args.inner.count < 4) {
         _ = try std.fs.File.stdout().write("Please provide 2 arguments: YEAR DAY, e.g. 2025 7");
         return;
     }
 
+    const INPUT_TYPE: types.PuzzleInput = @enumFromInt(try std.fmt.parseInt(
+        @typeInfo(types.PuzzleInput).@"enum".tag_type,
+        args.next().?,
+        10,
+    ));
     const YEAR = try std.fmt.parseInt(types.Year, args.next().?, 10);
     const DAY = try std.fmt.parseInt(types.Day, args.next().?, 10);
     const puzzle_file_path = args.next();
 
-    const response = try input.getPuzzleInputFromServer(allocator, YEAR, DAY, puzzle_file_path);
-    try std.fs.File.stdout().writeAll(response);
+    std.debug.print("{any}: {d}-{d}\n", .{ YEAR, DAY, INPUT_TYPE });
+
+    const sub_folder = switch (INPUT_TYPE) {
+        .EXAMPLE => "example",
+        .PUZZLE => "puzzle",
+    };
+    const file_name = try std.fmt.allocPrint(allocator, "day{d:0>2.}", .{DAY});
+    const file_path = try std.fs.path.join(allocator, &.{ ".", puzzle_file_path.?, sub_folder, file_name });
+    const file = std.fs.cwd().openFile(file_path, .{}) catch |err| {
+        switch (err) {
+            error.FileNotFound => {
+                _ = switch (INPUT_TYPE) {
+                    .PUZZLE => {
+                        const response = try input.getPuzzleInputFromServer(
+                            allocator,
+                            YEAR,
+                            DAY,
+                            file_path,
+                        );
+                        try std.fs.File.stdout().writeAll(response);
+                        return;
+                    },
+                    .EXAMPLE => {
+                        _ = try std.fs.cwd().createFile(file_path, .{});
+                        std.debug.print("🎁 Created empty {s}. Make sure to feed in data.\n", .{
+                            file_path,
+                        });
+                        return;
+                    },
+                };
+            },
+            else => {
+                @panic("Error not handled");
+            },
+        }
+    };
+
+    // Read existing file
+    const end = try file.getEndPos();
+    const result = try file.readToEndAlloc(allocator, end);
+
+    try std.fs.File.stdout().writeAll(result);
 }

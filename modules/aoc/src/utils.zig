@@ -1,5 +1,5 @@
 const std = @import("std");
-const zeit = @import("zeit");
+const types = @import("types.zig");
 
 pub fn blockAskForNext() void {
     step: {
@@ -12,19 +12,6 @@ pub fn blockAskForNext() void {
         _ = reader.interface.takeByte() catch return;
         break :step;
     }
-}
-
-pub fn getToday() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-
-    var env = try std.process.getEnvMap(allocator);
-    defer env.deinit();
-    const local = try zeit.local(allocator, &env);
-    const now = try zeit.instant(.{});
-    const now_local = now.in(&local);
-    const dt = now_local.time();
-    std.debug.print("{}", .{dt});
 }
 
 pub fn getTemplate() []const u8 {

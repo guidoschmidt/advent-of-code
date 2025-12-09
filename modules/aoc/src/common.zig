@@ -22,29 +22,19 @@ pub fn printTime(time: u64) void {
 
 pub fn runPart(
     allocator: std.mem.Allocator,
-    comptime day: types.Day,
-    input_type: types.PuzzleInput,
-    comptime part_fn: fn (allocator: Allocator, input: []const u8) anyerror!void,
+    comptime part_fn: fn (allocator: Allocator) anyerror!void,
 ) !void {
-    _ = day;
-    const input = switch (input_type) {
-        .PUZZLE => "", //try puzzle_input.getPuzzleInput(allocator, cwd, day),
-        .EXAMPLE => "", //try puzzle_input.getExampleInput(allocator, cwd, day),
-    };
     stopwatch.start();
-    try part_fn(allocator, input);
+    try part_fn(allocator);
     const time = stopwatch.stop();
     printTime(time);
 }
 
 pub fn runDay(
     allocator: std.mem.Allocator,
-    comptime year: types.Year,
-    comptime day: types.Day,
-    input_type: types.PuzzleInput,
-    comptime part1: fn (allocator: Allocator, input: []const u8) anyerror!void,
-    comptime part2: fn (allocator: Allocator, input: []const u8) anyerror!void,
+    comptime part1: fn (allocator: Allocator) anyerror!void,
+    comptime part2: fn (allocator: Allocator) anyerror!void,
 ) !void {
-    try runPart(allocator, year, day, input_type, part1);
-    try runPart(allocator, year, day, input_type, part2);
+    try runPart(allocator, part1);
+    try runPart(allocator, part2);
 }
