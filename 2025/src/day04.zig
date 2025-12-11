@@ -56,8 +56,7 @@ fn findAccessibleRolls(map: []u8, rows: usize, cols: usize) !usize {
     return result;
 }
 
-fn part1(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = input;
+fn part1(allocator: Allocator) anyerror!void {
     const input_embed = std.mem.trimEnd(u8, @embedFile("puzzle-04"), "\n");
 
     var it = std.mem.tokenizeSequence(u8, input_embed, "\n");
@@ -72,8 +71,7 @@ fn part1(allocator: Allocator, input: []const u8) anyerror!void {
     std.debug.print("Result: {d}\n", .{result});
 }
 
-fn part2(allocator: Allocator, input: []const u8) anyerror!void {
-    _ = input;
+fn part2(allocator: Allocator) anyerror!void {
     const input_embed = std.mem.trimEnd(u8, @embedFile("puzzle-04"), "\n");
 
     var it = std.mem.tokenizeSequence(u8, input_embed, "\n");
@@ -98,6 +96,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, DAY, .EXAMPLE, part1);
-    try aoc.runPart(allocator, DAY, .EXAMPLE, part2);
+    try aoc.runPart(allocator, part1);
+    try aoc.runPart(allocator, part2);
 }
