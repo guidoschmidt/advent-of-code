@@ -6,23 +6,20 @@ const utils = @import("src/utils.zig");
 pub fn createTemplate(allocator: std.mem.Allocator, day: types.Day) ![]const u8 {
     var template_str = utils.getTemplate();
     std.debug.print("{any}\n", .{@TypeOf(template_str)});
-    const search = "\"$DAY\"";
+    const search_DAY = "\"$DAY\"";
     const day_str = try std.fmt.allocPrint(allocator, "{d}", .{day});
     defer allocator.free(day_str);
-    template_str = try std.mem.replaceOwned(u8, allocator, template_str, search, day_str);
-    std.debug.print("{s}\n", .{template_str});
-    // while (std.mem.indexOf(
-    //     u8,
-    //     template_str,
-    // )) |found| {
-    //     var output = try allocator.alloc(u8, search.len);
-    // }
-    //     std.debug.print("{any}: ", .{found});
-    //     const found_slice = template_str[found .. found + "\"$DAY\"".len];
-    //     std.debug.print("{s}\n", .{found_slice});
-    //     break;
-    //     // found_slice = day_str;
-    // }
+    template_str = try std.mem.replaceOwned(u8, allocator, template_str, search_DAY, day_str);
+    const search_DAY_embedFile = "$DAY";
+    for (0..2) |_| {
+        template_str = try std.mem.replaceOwned(
+            u8,
+            allocator,
+            template_str,
+            search_DAY_embedFile,
+            day_str,
+        );
+    }
     return template_str;
 }
 

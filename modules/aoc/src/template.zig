@@ -8,12 +8,14 @@ const log = std.log;
 
 fn part1(allocator: Allocator) anyerror!void {
     _ = allocator;
-    // std.debug.print("--- INPUT---\n{s}\n------------\n", .{input});
+    const input = @embedFile("example-$DAY");
+    std.debug.print("--- INPUT---\n{s}\n------------\n", .{input});
 }
 
 fn part2(allocator: Allocator) anyerror!void {
     _ = allocator;
-    // std.debug.print("--- INPUT---\n{s}\n------------\n", .{@embedFile()});
+    const input = @embedFile("example-$DAY");
+    std.debug.print("--- INPUT---\n{s}\n------------\n", .{input});
 }
 
 pub fn main() !void {
