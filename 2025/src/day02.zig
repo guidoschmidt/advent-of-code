@@ -44,7 +44,7 @@ fn part1(allocator: Allocator) anyerror!void {
 }
 
 fn part2(allocator: Allocator) anyerror!void {
-    const input_embed = @embedFile("example-02");
+    const input_embed = @embedFile("puzzle-02");
     std.debug.print("--- INPUT---\n{s}\n------------\n", .{input_embed});
 
     var result: usize = 0;
@@ -59,26 +59,26 @@ fn part2(allocator: Allocator) anyerror!void {
         for (lower..upper + 1) |id| {
             const id_str = try std.fmt.allocPrint(allocator, "{d}", .{id});
             defer allocator.free(id_str);
+
             var invalid = false;
 
-            for (1..id_str.len) |x| {
-                // const remainder = std.math.rem(usize, countDigits(id), x);
+            const digit_count = countDigits(id);
+            check: for (1..digit_count) |x| {
+                const w = digit_count - x;
+                const remainder = try std.math.rem(usize, digit_count, w);
+                if (remainder > 0) continue;
 
-                var window_it = std.mem.window(u8, id_str, x, x);
+                var window_it = std.mem.window(u8, id_str, w, w);
+                const search = window_it.next().?;
                 while (window_it.next()) |seq| {
-                    if (std.mem.containsAtLeast(u8, id_str, 2, seq)) {
-                        std.debug.print("{s} ?? {s}\n", .{ id_str, seq });
-                        invalid = true;
-                        break;
+                    if (!std.mem.eql(u8, search, seq)) {
+                        continue :check;
                     }
                 }
+                invalid = true;
+                break :check;
             }
-            result += id;
-            //     const left = id_str[0 .. id_str.len / 2];
-            //     const right = id_str[id_str.len / 2 ..];
-            //     defer allocator.free(id_str);
-            //     if (std.mem.eql(u8, left, right)) result += id;
-            // }
+            if (invalid) result += id;
         }
     }
 
