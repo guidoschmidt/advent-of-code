@@ -91,6 +91,10 @@ pub fn setupDay(
     const dep_libs = b.dependency("libs", .{});
     exe.root_module.addImport("libs", dep_libs.module("libs"));
 
+    return exe;
+}
+
+pub fn runDay(b: *std.Build, exe: *std.Build.Step.Compile) void {
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
 
@@ -100,16 +104,14 @@ pub fn setupDay(
     // Tests
     const tests = b.addTest(.{
         .root_module = b.createModule(.{
-            .root_source_file = b.path(src_path),
-            .target = target,
-            .optimize = optimize,
+            .root_source_file = exe.root_module.root_source_file,
+            .target = exe.root_module.resolved_target,
+            .optimize = exe.root_module.optimize,
         }),
     });
     const run_tests = b.addRunArtifact(tests);
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_tests.step);
-
-    return exe;
 }
 
 pub fn createTemplate(allocator: std.mem.Allocator, day: types.Day) ![]const u8 {
