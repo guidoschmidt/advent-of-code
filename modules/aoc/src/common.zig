@@ -9,7 +9,15 @@ pub fn printTime(time: u64) void {
     const ns = time;
     const us: f64 = @floatFromInt(time / std.time.ns_per_us);
     const ms: f64 = @floatFromInt(time / std.time.ns_per_ms);
-    std.debug.print("\n— ⌛️ Running time: {d:3} ms / {d:3} μs / {d} ns\n", .{ ms, us, ns });
+    const s: f64 = @floatFromInt(time / std.time.ns_per_s);
+    const min: f64 = @floatFromInt(time / std.time.ns_per_min);
+    std.debug.print("\n— ⌛️ Running time: {d:2}:{d:3} min / {d:3} ms / {d:3} μs / {d} ns\n", .{
+        min,
+        s,
+        ms,
+        us,
+        ns,
+    });
 }
 
 pub fn runPart(
