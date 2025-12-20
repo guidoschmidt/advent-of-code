@@ -19,11 +19,6 @@ pub fn main() !void {
     defer args.deinit();
     _ = args.next(); // binary name
 
-    if (args.inner.count < 4) {
-        _ = try std.fs.File.stdout().write("Please provide 2 arguments: YEAR DAY, e.g. 2025 7");
-        return;
-    }
-
     const INPUT_TYPE: types.PuzzleInput = @enumFromInt(try std.fmt.parseInt(
         @typeInfo(types.PuzzleInput).@"enum".tag_type,
         args.next().?,
