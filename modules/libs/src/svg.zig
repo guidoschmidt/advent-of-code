@@ -5,19 +5,17 @@ var file: fs.File = undefined;
 var buf: [128]u8 = undefined;
 
 pub fn init(file_path: []const u8, width: i128, height: i128, min_x: i128, max_x: i128, min_y: i128, max_y: i128) !void {
-    _ = max_y;
-    _ = min_y;
-    _ = max_x;
-    _ = min_x;
     file = try fs.cwd().createFile(file_path, .{});
-    const margin_x: i128 = @intFromFloat(@as(f32, @floatFromInt(width)) * 0.1);
-    _ = margin_x;
-    const margin_y: i128 = @intFromFloat(@as(f32, @floatFromInt(height)) * 0.1);
-    _ = margin_y;
-    // const svg_el = try std.fmt.bufPrint(&buf, "<svg viewBox=\"{d} {d} {d} {d}\" width=\"{d}\" height=\"{d}\" xmlns=\"http://www.w3.org/2000/svg\">",
-    //                                     .{ -margin_x, -margin_y, width + 2 * margin_x, height + 2 * margin_y, width, height });
-    const svg_el = try std.fmt.bufPrint(&buf, "<svg width=\"{d}\" height=\"{d}\" xmlns=\"http://www.w3.org/2000/svg\">",
-                                        .{ width, height });
+    const svg_el = try std.fmt.bufPrint(&buf, "<svg viewBox=\"{d} {d} {d} {d}\" width=\"{d}\" height=\"{d}\" xmlns=\"http://www.w3.org/2000/svg\">", .{
+        min_x,
+        min_y,
+        max_x,
+        max_y,
+        width,
+        height,
+    });
+    // const svg_el = try std.fmt.bufPrint(&buf, "<svg width=\"{d}\" height=\"{d}\" xmlns=\"http://www.w3.org/2000/svg\">",
+    // .{ width, height });
     _ = try file.write(svg_el);
 }
 
@@ -40,8 +38,9 @@ pub fn addPolygonPoint(x: i128, y: i128) !void {
     _ = try file.write(point);
 }
 
-pub fn endPolygon() !void {
-    _ = try file.write("\" fill=\"black\" />");
+pub fn endPolygon(fill: []const u8) !void {
+    const end = try std.fmt.bufPrint(&buf, "\" fill=\"{s}\" />", .{fill});
+    _ = try file.write(end);
 }
 
 pub fn close() !void {

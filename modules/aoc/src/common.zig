@@ -1,0 +1,40 @@
+const std = @import("std");
+const types = @import("types.zig");
+const puzzle_input = @import("input.zig");
+const stopwatch = @import("stopwatch.zig");
+
+const Allocator = std.mem.Allocator;
+
+pub fn printTime(time: u64) void {
+    const ns = time;
+    const us: f64 = @floatFromInt(time / std.time.ns_per_us);
+    const ms: f64 = @floatFromInt(time / std.time.ns_per_ms);
+    const s: f64 = @floatFromInt(time / std.time.ns_per_s);
+    const min: f64 = @floatFromInt(time / std.time.ns_per_min);
+    std.debug.print("\n— ⌛️ Running time: {d:2}:{d:3} min / {d:3} ms / {d:3} μs / {d} ns\n", .{
+        min,
+        s,
+        ms,
+        us,
+        ns,
+    });
+}
+
+pub fn runPart(
+    allocator: std.mem.Allocator,
+    comptime part_fn: fn (allocator: Allocator) anyerror!void,
+) !void {
+    stopwatch.start();
+    try part_fn(allocator);
+    const time = stopwatch.stop();
+    printTime(time);
+}
+
+pub fn runDay(
+    allocator: std.mem.Allocator,
+    comptime part1: fn (allocator: Allocator) anyerror!void,
+    comptime part2: fn (allocator: Allocator) anyerror!void,
+) !void {
+    try runPart(allocator, part1);
+    try runPart(allocator, part2);
+}

@@ -24,6 +24,7 @@ jobs:
 
       - name: Compile all solutions for current year
         run: zig build
+        working-directory: 2025
         env:
           AOC_COOKIE: ${{ secrets.AOC_COOKIE }}
         
