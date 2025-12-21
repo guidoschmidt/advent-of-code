@@ -207,9 +207,109 @@ fn part1(allocator: Allocator) anyerror!void {
 }
 
 fn part2(allocator: Allocator) anyerror!void {
-    _ = allocator;
-    // const input = @embedFile("example-08");
-    // std.debug.print("--- INPUT---\n{s}\n------------\n", .{@embedFile()});
+    const input = @embedFile("puzzle-08");
+
+    var reader: std.Io.Reader = .fixed(input);
+
+    var junction_boxes: std.array_list.Managed(Box(f32)) = .init(allocator);
+    defer junction_boxes.deinit();
+
+    var idx: usize = 0;
+    while (try reader.takeDelimiter('\n')) |line| {
+        var coords_it = std.mem.splitScalar(u8, line, ',');
+        var coord: @Vector(3, f32) = @splat(0);
+        var i: usize = 0;
+        while (coords_it.next()) |str| : (i += 1) {
+            const v = try std.fmt.parseFloat(f32, str);
+            std.debug.assert(v != 0);
+            coord[i] = v;
+        }
+        std.debug.assert(i <= 3);
+        try junction_boxes.append(.{
+            .id = idx,
+            .pos = coord,
+        });
+        idx += 1;
+    }
+
+    var connections: std.array_list.Managed(Connection(f32)) = .init(allocator);
+    defer connections.deinit();
+
+    var used_boxes: std.bit_set.DynamicBitSet = try .initEmpty(allocator, 4096);
+    defer used_boxes.deinit();
+    var circuits: std.array_list.Managed(Circuit) = .init(allocator);
+    defer circuits.deinit();
+    defer for (circuits.items) |*c| c.deinit();
+
+    for (0..junction_boxes.items.len) |i| {
+        for (i..junction_boxes.items.len) |j| {
+            const a = junction_boxes.items[i];
+            const b = junction_boxes.items[j];
+            const d = distance(f32, a.pos, b.pos);
+            if (!used_boxes.isSet(a.id)) {
+                try circuits.append(try .init(allocator, a));
+                used_boxes.set(a.id);
+            }
+            if (!used_boxes.isSet(b.id)) {
+                try circuits.append(try .init(allocator, b));
+                used_boxes.set(b.id);
+            }
+            if (d == 0) continue;
+            try connections.append(.{
+                .a = a,
+                .b = b,
+                .d = d,
+            });
+        }
+    }
+
+    std.mem.sort(Connection(f32), connections.items, {}, comptime struct {
+        pub fn f(_: void, a: Connection(f32), b: Connection(f32)) bool {
+            return a.d > b.d;
+        }
+    }.f);
+
+    var result: usize = 0;
+    var i: usize = 0;
+    while (connections.pop()) |next| : (i += 1) {
+        var circuit_a: ?Circuit = null;
+        var count: usize = circuits.items.len;
+        for (0..count) |c| {
+            const circuit = circuits.items[c];
+            if (circuit.contains(next.a) and circuit.contains(next.b)) continue;
+            if (circuit.contains(next.a)) {
+                circuit_a = circuits.swapRemove(c);
+                count = circuits.items.len;
+                break;
+            }
+        }
+
+        var circuit_b: ?Circuit = null;
+        for (0..circuits.items.len) |c| {
+            const circuit = circuits.items[c];
+            if (circuit.contains(next.a) and circuit.contains(next.b)) continue;
+            if (circuit.contains(next.b)) {
+                circuit_b = circuits.swapRemove(c);
+                break;
+            }
+        }
+
+        if (circuit_a != null and circuit_b != null) {
+            defer circuit_a.?.deinit();
+            defer circuit_b.?.deinit();
+            var merged: Circuit = try .initEmpty(allocator);
+            merged.merge(circuit_a.?);
+            merged.merge(circuit_b.?);
+            try circuits.append(merged);
+        }
+
+        if (circuits.items.len == 1) {
+            result = @as(usize, @intFromFloat(next.a.pos[0])) * @as(usize, @intFromFloat(next.b.pos[0]));
+            break;
+        }
+    }
+
+    std.debug.print("Result: {d}\n", .{result});
 }
 
 pub fn main() !void {
@@ -217,6 +317,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    try aoc.runPart(allocator, part1);
-    // try aoc.runPart(allocator, part2);
+    // try aoc.runPart(allocator, part1);
+    try aoc.runPart(allocator, part2);
 }
