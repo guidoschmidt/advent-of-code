@@ -1,0 +1,17 @@
+.{
+    .name = .advent_of_code2015,
+    .fingerprint = 0x5c71490e86d5c2fc,
+    .version = "0.0.1",
+    .minimum_zig_version = "0.15.2",
+    .dependencies = .{
+        .aoc = .{ .path = "../modules/aoc" },
+        .libs = .{ .path = "../modules/libs" },
+    },
+    .paths = .{
+        "README.md",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "modules",
+    },
+}
